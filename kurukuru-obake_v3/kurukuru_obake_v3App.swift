@@ -15,3 +15,5 @@ struct kurukuru_obake_v3App: App {
         }
     }
 }
+
+
