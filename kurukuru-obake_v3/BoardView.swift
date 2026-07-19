@@ -247,7 +247,7 @@ struct TileView: View {
                     .resizable()
                     .scaledToFit()
                     .frame(width: tileSize * 1.18, height: tileSize * 1.18)
-                    .opacity(0.5)
+                    .opacity(0.6)
                     .blendMode(.screen)
             }
         }

@@ -33,7 +33,7 @@ class GameBoard: ObservableObject {
     @Published var score: Int = 0
     @Published var collectedStars: Int = 0
     @Published var unlockedGhosts: Int = 0
-    @Published var missionTarget = 18
+    @Published var missionTarget = 26
     @Published var isGameOver = false
     @Published var isGameOverPending = false
     @Published var isMissionClearPending = false
@@ -43,7 +43,7 @@ class GameBoard: ObservableObject {
 
     let size = 8
     private let maxFrozenTiles = 8
-    private var movesUntilMischief = Int.random(in: 5...8)
+    private var movesUntilMischief = Int.random(in: 3...5)
     private var isPlayerMovePending = false
     private var boardSessionID = UUID()
     
@@ -53,8 +53,8 @@ class GameBoard: ObservableObject {
     
     func resetBoard() {
         boardSessionID = UUID()
-        missionTarget = 18
-        movesUntilMischief = Int.random(in: 5...8)
+        missionTarget = 26
+        movesUntilMischief = Int.random(in: 3...5)
         isPlayerMovePending = false
         isMissionClearPending = false
         mischiefCoord = nil
@@ -156,6 +156,7 @@ class GameBoard: ObservableObject {
                 )
             }
         }
+        SoundManager.shared.playEffect(named: "koori.mp3")
     }
 
     func autoMatchAndRemove() {
@@ -316,13 +317,14 @@ class GameBoard: ObservableObject {
             .prefix(3)
         let targets = [center] + Array(nearbyTargets)
 
-        movesUntilMischief = Int.random(in: 5...8)
+        movesUntilMischief = Int.random(in: 3...5)
         isMischiefAnimating = true
         let sessionID = boardSessionID
 
         withAnimation(.spring(response: 0.38, dampingFraction: 0.62)) {
             mischiefCoord = center
         }
+        SoundManager.shared.playEffect(named: "yuurei.mp3")
 
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.55) {
             guard self.boardSessionID == sessionID else { return }

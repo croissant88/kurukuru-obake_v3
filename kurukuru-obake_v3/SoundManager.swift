@@ -14,7 +14,7 @@ final class SoundManager: NSObject, AVAudioPlayerDelegate {
     static let defaultBGMFileName = "Rain.aac"
 
     private var bgmPlayer: AVAudioPlayer?
-    private var effectPlayer: AVAudioPlayer?
+    private var effectPlayers: [AVAudioPlayer] = []
 
     private override init() {
         super.init()
@@ -71,11 +71,14 @@ final class SoundManager: NSObject, AVAudioPlayerDelegate {
     }
 
     func audioPlayerDidFinishPlaying(_ player: AVAudioPlayer, successfully flag: Bool) {
-        // `numberOfLoops == -1` では通常呼ばれないが、念のため先頭から繰り返す
-        guard player === bgmPlayer else { return }
-        player.currentTime = 0
-        player.numberOfLoops = -1
-        player.play()
+        if player === bgmPlayer {
+            // `numberOfLoops == -1` では通常呼ばれないが、念のため先頭から繰り返す
+            player.currentTime = 0
+            player.numberOfLoops = -1
+            player.play()
+        } else {
+            effectPlayers.removeAll { $0 === player }
+        }
     }
 
     private func configureSessionForBGM() throws {
@@ -109,10 +112,11 @@ final class SoundManager: NSObject, AVAudioPlayerDelegate {
         }
         do {
             let player = try AVAudioPlayer(contentsOf: url)
+            player.delegate = self
             player.volume = volume
             player.prepareToPlay()
+            effectPlayers.append(player)
             player.play()
-            effectPlayer = player // 弱参照を保持して途中で消えないようにする
         } catch {
             print("効果音再生エラー: \(error)")
         }
