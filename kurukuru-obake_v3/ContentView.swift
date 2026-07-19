@@ -3,33 +3,26 @@ import Combine
 
 struct ContentView: View {
     private let bestScoreKey = "bestScore"
+    private let moveLimit = 23
 
-    @StateObject private var board: GameBoard
+    @StateObject private var board = GameBoard()
     @State private var dragColor: Color? = nil
     @State private var selected: [Coord] = []
     @State private var gameStartTime: Date?
     @State private var displayElapsedSeconds = 0
     @State private var moveCount = 0
     @State private var endPopupImageName = "clear_01"
-    /// Game Clear ポップアップを × で閉じたあと、盤面は触れないがタップでポップアップを出し直せる
-    @State private var victoryPopupDismissed = false
-    @State private var playLockedAfterVictory = false
+    /// Game Over ポップアップを × で閉じたあと、盤面は触れないがタップでポップアップを出し直せる
+    @State private var endPopupDismissed = false
+    @State private var playLockedAfterEnd = false
     @State private var showMissionBriefing = true
     @State private var missionBriefingOpacity: Double = 1.0
     private let playTimer = Timer.publish(every: 0.2, on: .main, in: .common).autoconnect()
     private let impactFeedback = UIImpactFeedbackGenerator(style: .light)
 
-    init(missionTarget: Int = 5) {
-        _board = StateObject(wrappedValue: GameBoard(missionTarget: missionTarget))
-    }
-
     private var timeString: String {
         let s = displayElapsedSeconds
         return String(format: "%02d:%02d", s / 60, s % 60)
-    }
-
-    private var isVictory: Bool {
-        board.unlockedGhosts >= board.missionTarget
     }
 
     private var bestScore: Int {
@@ -37,9 +30,16 @@ struct ContentView: View {
     }
 
     private var showEndPopup: Bool {
-        guard board.isGameClear else { return false }
-        if isVictory { return !victoryPopupDismissed }
-        return true
+        board.isGameOver && !endPopupDismissed
+    }
+
+    private var canInteract: Bool {
+        !showMissionBriefing
+            && !board.isGameOver
+            && !board.isGameOverPending
+            && !board.isMissionClearPending
+            && !board.isMischiefAnimating
+            && !playLockedAfterEnd
     }
 
     private var boardPixelSide: CGFloat {
@@ -78,6 +78,11 @@ struct ContentView: View {
                     .multilineTextAlignment(.center)
                     .frame(width: boardDisplayWidth, alignment: .center)
                     .frame(minHeight: 22, alignment: .center)
+
+                Text("残り \(moveLimit - moveCount) 手")
+                    .font(.system(size: 20, weight: .bold, design: .rounded))
+                    .foregroundColor(.white)
+                    .frame(width: boardDisplayWidth, alignment: .center)
                     .padding(.bottom, 12)
 
                 HStack(alignment: .firstTextBaseline) {
@@ -120,7 +125,7 @@ struct ContentView: View {
                     .gesture(
                         DragGesture(minimumDistance: 0)
                             .onChanged { value in
-                                if !showMissionBriefing && !board.isGameClear && !playLockedAfterVictory {
+                                if canInteract {
                                     let p = CGPoint(
                                         x: value.location.x / boardFitScale,
                                         y: value.location.y / boardFitScale
@@ -129,7 +134,7 @@ struct ContentView: View {
                                 }
                             }
                             .onEnded { _ in
-                                if !showMissionBriefing && !board.isGameClear && !playLockedAfterVictory {
+                                if canInteract {
                                     handleEnd()
                                 }
                             }
@@ -149,7 +154,7 @@ struct ContentView: View {
 
                 Spacer()
             }
-            .blur(radius: board.isGameClear && !victoryPopupDismissed ? 8 : 0)
+            .blur(radius: showEndPopup ? 8 : 0)
 
             if showMissionBriefing {
                 ZStack {
@@ -159,7 +164,7 @@ struct ContentView: View {
                         .allowsHitTesting(missionBriefingOpacity > 0.08)
 
                     VStack(spacing: 10) {
-                        Text("ミッション")
+                        Text("\(moveLimit)手ミッション")
                             .font(.system(size: 15, weight: .semibold, design: .rounded))
                             .foregroundColor(.white.opacity(0.85))
                         Text("魂を \(board.missionTarget) 体解放")
@@ -189,36 +194,28 @@ struct ContentView: View {
                     starCount: board.collectedStars,
                     ghosts: board.unlockedGhosts,
                     missionTarget: board.missionTarget,
+                    isClear: board.unlockedGhosts >= board.missionTarget,
                     imageName: endPopupImageName,
-                    clearActionTitle: "もう一度",
+                    clearActionTitle: "次へ",
                     onNewGame: { resetGame() },
                     onClose: {
                         resetGame()
                     },
                     onClosePopup: {
-                        if board.unlockedGhosts >= board.missionTarget {
-                            victoryPopupDismissed = true
-                            playLockedAfterVictory = true
-                            withAnimation {
-                                board.isGameClear = false
-                            }
-                        } else {
-                            withAnimation {
-                                board.isGameClear = false
-                            }
-                        }
+                        endPopupDismissed = true
+                        playLockedAfterEnd = true
                     }
                 )
             }
 
-            if playLockedAfterVictory && !board.isGameClear {
+            if playLockedAfterEnd && endPopupDismissed {
                 Color.clear
                     .contentShape(Rectangle())
                     .ignoresSafeArea()
                     .onTapGesture {
-                        victoryPopupDismissed = false
+                        endPopupDismissed = false
                         withAnimation {
-                            board.isGameClear = true
+                            board.isGameOver = true
                         }
                     }
             }
@@ -233,12 +230,16 @@ struct ContentView: View {
             scheduleMissionBriefingDismissal()
             SoundManager.shared.playBGM()
         }
-        .onChange(of: board.isGameClear) { _, isGameClearNow in
-            guard isGameClearNow else { return }
+        .onChange(of: board.isGameOver) { _, isGameOverNow in
+            guard isGameOverNow else { return }
             endPopupImageName = ["clear_01", "clear_02", "clear_03"].randomElement() ?? "clear_01"
         }
         .onReceive(playTimer) { _ in
-            guard !showMissionBriefing, !board.isGameClear, !playLockedAfterVictory, let start = gameStartTime else { return }
+            guard !showMissionBriefing,
+                  !board.isGameOver,
+                  !board.isGameOverPending,
+                  !playLockedAfterEnd,
+                  let start = gameStartTime else { return }
             displayElapsedSeconds = max(0, Int(Date().timeIntervalSince(start)))
         }
     }
@@ -262,7 +263,8 @@ struct ContentView: View {
 
     private func resetGame() {
         withAnimation {
-            board.isGameClear = false
+            board.isGameOver = false
+            board.isGameOverPending = false
             board.resetBoard()
             board.score = 0
             board.collectedStars = 0
@@ -270,8 +272,8 @@ struct ContentView: View {
             moveCount = 0
             gameStartTime = nil
             displayElapsedSeconds = 0
-            victoryPopupDismissed = false
-            playLockedAfterVictory = false
+            endPopupDismissed = false
+            playLockedAfterEnd = false
             selected.removeAll()
             dragColor = nil
         }
@@ -287,6 +289,8 @@ struct ContentView: View {
         let row = Int((localY + boardOffset).rounded().clamped(to: 0...CGFloat(board.size - 1)))
         guard (0..<board.size).contains(row), (0..<board.size).contains(col) else { return }
         let coord = Coord(row: row, col: col)
+        guard !board.tiles[row][col].isFrozen else { return }
+
         if dragColor == nil {
             dragColor = board.tiles[row][col].color
             selected = [coord]
@@ -305,6 +309,10 @@ struct ContentView: View {
     private func handleEnd() {
         if selected.count >= 3 {
             moveCount += 1
+            if moveCount >= moveLimit {
+                board.isGameOverPending = true
+            }
+            board.beginPlayerMove()
             board.processMatchedTiles(coords: selected)
             SoundManager.shared.playEffect(named: "chain1.mp3")
 

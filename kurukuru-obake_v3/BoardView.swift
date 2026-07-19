@@ -82,6 +82,26 @@ struct BoardView: View {
                             }
                         }
                     }
+
+                    // 👾 盤面の裏から現れて魂を凍結する夜の悪戯もの
+                    if let mischiefCoord = board.mischiefCoord {
+                        let x = geo.size.width / 2 + (CGFloat(mischiefCoord.col) - CGFloat(board.size - 1) / 2) * (cellSize + spacing)
+                        let y = geo.size.height / 2 + (CGFloat(mischiefCoord.row) - CGFloat(board.size - 1) / 2) * (cellSize + spacing)
+
+                        Image("yukionna")
+                            .resizable()
+                            .scaledToFit()
+                            .frame(width: cellSize * 1.2, height: cellSize * 1.2)
+                            .position(x: x, y: y)
+                            .transition(
+                                .asymmetric(
+                                    insertion: .scale(scale: 0.15).combined(with: .opacity),
+                                    removal: .scale(scale: 0.05).combined(with: .opacity)
+                                )
+                            )
+                            .zIndex(24)
+                    }
+
                     // 💫 消えたタイルの位置にキラキラを出す
                     ForEach(board.sparkles, id: \.self) { coord in
                         let x = geo.size.width / 2 + (CGFloat(coord.col) - CGFloat(board.size - 1) / 2) * (cellSize + spacing)
@@ -215,6 +235,21 @@ struct TileView: View {
                     .offset(y: 0.5)
                     .zIndex(2)
             }
+
+            if tile.freezeLevel >= 2 {
+                Image("koori_01")
+                    .resizable()
+                    .scaledToFit()
+                    .frame(width: tileSize * 1.18, height: tileSize * 1.18)
+                    .blendMode(.screen)
+            } else if tile.freezeLevel == 1 {
+                Image("koori_01")
+                    .resizable()
+                    .scaledToFit()
+                    .frame(width: tileSize * 1.18, height: tileSize * 1.18)
+                    .opacity(0.5)
+                    .blendMode(.screen)
+            }
         }
         /// フラット見せ：単色の薄い縁取りのみ
         .overlay {
@@ -223,6 +258,7 @@ struct TileView: View {
         }
         .scaleEffect(isSelected ? 1.06 : 1.0)
         .animation(.spring(response: 0.28, dampingFraction: 0.62), value: isSelected)
+        .animation(.easeInOut(duration: 0.25), value: tile.freezeLevel)
         // 💫 消去アニメーション
         .onChange(of: tile.isMatched) { matched in
             if matched {

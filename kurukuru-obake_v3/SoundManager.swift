@@ -11,7 +11,7 @@ final class SoundManager: NSObject, AVAudioPlayerDelegate {
     static let shared = SoundManager()
 
     /// 既定の BGM（`KurukuruObake` フォルダに置く。同期グループなら自動でバンドルに入る）
-    static let defaultBGMFileName = "Rain.mp3"
+    static let defaultBGMFileName = "Rain.aac"
 
     private var bgmPlayer: AVAudioPlayer?
     private var effectPlayer: AVAudioPlayer?
@@ -27,7 +27,7 @@ final class SoundManager: NSObject, AVAudioPlayerDelegate {
     }
 
     // 🎵 BGM 再生（ループ）
-    /// `name` は `"Rain.mp3"` のように拡張子付き、または従来どおり拡張子なしのリソース名
+    /// `name` は `"Rain.aac"` のように拡張子付き、または従来どおり拡張子なしのリソース名
     /// `-1` = 無限ループ（`AVAudioPlayer` の仕様）
     func playBGM(named name: String = SoundManager.defaultBGMFileName, volume: Float = 0.4) {
         if bgmPlayer?.isPlaying == true { return }

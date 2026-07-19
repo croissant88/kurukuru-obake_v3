@@ -9,6 +9,8 @@ struct Tile: Identifiable, Equatable {
     var fallOffset: CGFloat = 0
     var opacity: Double = 1.0
     var isGhost: Bool = false
+    var freezeLevel: Int = 0
+    var isFrozen: Bool { freezeLevel > 0 }
     let isActive: Bool = true
 }
 
@@ -31,21 +33,32 @@ class GameBoard: ObservableObject {
     @Published var score: Int = 0
     @Published var collectedStars: Int = 0
     @Published var unlockedGhosts: Int = 0
-    @Published var isGameClear = false
+    @Published var missionTarget = 18
+    @Published var isGameOver = false
+    @Published var isGameOverPending = false
+    @Published var isMissionClearPending = false
+    @Published var mischiefCoord: Coord?
+    @Published var isMischiefAnimating = false
     @Published var popups: [ScorePopupData] = []
-    
-    @Published var isVictoryPending = false
-
-    let missionTarget: Int
 
     let size = 8
+    private let maxFrozenTiles = 8
+    private var movesUntilMischief = Int.random(in: 5...8)
+    private var isPlayerMovePending = false
+    private var boardSessionID = UUID()
     
-    init(missionTarget: Int = 5) {
-        self.missionTarget = missionTarget
+    init() {
         resetBoard()
     }
     
     func resetBoard() {
+        boardSessionID = UUID()
+        missionTarget = 18
+        movesUntilMischief = Int.random(in: 5...8)
+        isPlayerMovePending = false
+        isMissionClearPending = false
+        mischiefCoord = nil
+        isMischiefAnimating = false
         tiles = (0..<size).map { row in
             (0..<size).map { col in
                 var tile = Tile(color: GameColors.all.randomElement() ?? .blue)
@@ -57,25 +70,46 @@ class GameBoard: ObservableObject {
         }
     }
 
-    func showFinalPopup() {
-        guard !isGameClear else { return }
+    func beginPlayerMove() {
+        isPlayerMovePending = true
+    }
+
+    func showGameOver() {
+        guard !isGameOver else { return }
         DispatchQueue.main.async {
             withAnimation {
-                self.isGameClear = true
-                self.isVictoryPending = false
+                self.isGameOver = true
+                self.isGameOverPending = false
+                self.isMissionClearPending = false
             }
         }
+    }
+
+    @discardableResult
+    func freezeTile(at coord: Coord) -> Bool {
+        guard (0..<size).contains(coord.row),
+              (0..<size).contains(coord.col),
+              tiles[coord.row][coord.col].color != .clear,
+              !tiles[coord.row][coord.col].isFrozen else {
+            return false
+        }
+
+        withAnimation(.easeInOut(duration: 0.25)) {
+            tiles[coord.row][coord.col].freezeLevel = 2
+        }
+        return true
     }
 
     // ✅ 消去とカウントの共通ルール
     func processMatchedTiles(coords: [Coord]) {
         let uniqueCoords = Array(Set(coords))
+        thawFrozenTiles(adjacentTo: uniqueCoords)
         let ghostCount = uniqueCoords.filter { tiles[$0.row][$0.col].isGhost }.count
         
         if ghostCount > 0 {
             unlockedGhosts += ghostCount
-            if unlockedGhosts >= missionTarget && !isVictoryPending {
-                isVictoryPending = true
+            if unlockedGhosts >= missionTarget {
+                isMissionClearPending = true
             }
         }
         
@@ -94,6 +128,36 @@ class GameBoard: ObservableObject {
         }
     }
 
+    private func thawFrozenTiles(adjacentTo matchedCoords: [Coord]) {
+        guard !matchedCoords.isEmpty else { return }
+
+        var frozenTilesToThaw: [Coord] = []
+        for row in 0..<size {
+            for col in 0..<size where tiles[row][col].isFrozen {
+                let frozenCoord = Coord(row: row, col: col)
+                let isAdjacentToMatch = matchedCoords.contains { matchedCoord in
+                    let rowDistance = abs(matchedCoord.row - frozenCoord.row)
+                    let colDistance = abs(matchedCoord.col - frozenCoord.col)
+                    return max(rowDistance, colDistance) == 1
+                }
+
+                if isAdjacentToMatch {
+                    frozenTilesToThaw.append(frozenCoord)
+                }
+            }
+        }
+
+        guard !frozenTilesToThaw.isEmpty else { return }
+        withAnimation(.easeOut(duration: 0.3)) {
+            for coord in frozenTilesToThaw {
+                tiles[coord.row][coord.col].freezeLevel = max(
+                    0,
+                    tiles[coord.row][coord.col].freezeLevel - 1
+                )
+            }
+        }
+    }
+
     func autoMatchAndRemove() {
         var matchedCoords: [Coord] = []
         
@@ -101,7 +165,12 @@ class GameBoard: ObservableObject {
         for row in 0..<size {
             for col in 0..<size - 2 {
                 let c = tiles[row][col].color
-                if c != .clear && tiles[row][col + 1].color == c && tiles[row][col + 2].color == c {
+                if c != .clear
+                    && !tiles[row][col].isFrozen
+                    && !tiles[row][col + 1].isFrozen
+                    && !tiles[row][col + 2].isFrozen
+                    && tiles[row][col + 1].color == c
+                    && tiles[row][col + 2].color == c {
                     matchedCoords += [Coord(row: row, col: col), Coord(row: row, col: col + 1), Coord(row: row, col: col + 2)]
                 }
             }
@@ -109,7 +178,12 @@ class GameBoard: ObservableObject {
         for col in 0..<size {
             for row in 0..<size - 2 {
                 let c = tiles[row][col].color
-                if c != .clear && tiles[row + 1][col].color == c && tiles[row + 2][col].color == c {
+                if c != .clear
+                    && !tiles[row][col].isFrozen
+                    && !tiles[row + 1][col].isFrozen
+                    && !tiles[row + 2][col].isFrozen
+                    && tiles[row + 1][col].color == c
+                    && tiles[row + 2][col].color == c {
                     matchedCoords += [Coord(row: row, col: col), Coord(row: row + 1, col: col), Coord(row: row + 2, col: col)]
                 }
             }
@@ -117,7 +191,15 @@ class GameBoard: ObservableObject {
         
         guard !matchedCoords.isEmpty else {
             if chainCount > 0 { chainCount = 0 }
-            if isVictoryPending { showFinalPopup() }
+            if isMissionClearPending {
+                isPlayerMovePending = false
+                showGameOver()
+            } else if isGameOverPending {
+                isPlayerMovePending = false
+                showGameOver()
+            } else {
+                finishPlayerMoveIfNeeded()
+            }
             return
         }
         
@@ -192,6 +274,93 @@ class GameBoard: ObservableObject {
         }
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.8) {
             self.autoMatchAndRemove()
+        }
+    }
+
+    private func finishPlayerMoveIfNeeded() {
+        guard isPlayerMovePending else { return }
+        isPlayerMovePending = false
+        movesUntilMischief -= 1
+
+        guard movesUntilMischief <= 0 else { return }
+        triggerMischiefIfPossible()
+    }
+
+    private func triggerMischiefIfPossible() {
+        let frozenTileCount = tiles
+            .flatMap { $0 }
+            .filter(\.isFrozen)
+            .count
+        let availableGhostCenters = (0..<size).flatMap { row in
+            (0..<size).compactMap { col -> Coord? in
+                let tile = tiles[row][col]
+                let coord = Coord(row: row, col: col)
+                guard tile.isGhost,
+                      !tile.isFrozen,
+                      !tile.isMatched,
+                      nearbyNormalTiles(around: coord).count >= 3 else {
+                    return nil
+                }
+                return coord
+            }
+        }
+
+        guard maxFrozenTiles - frozenTileCount >= 4,
+              let center = availableGhostCenters.randomElement() else {
+            movesUntilMischief = 2
+            return
+        }
+
+        let nearbyTargets = nearbyNormalTiles(around: center)
+            .shuffled()
+            .prefix(3)
+        let targets = [center] + Array(nearbyTargets)
+
+        movesUntilMischief = Int.random(in: 5...8)
+        isMischiefAnimating = true
+        let sessionID = boardSessionID
+
+        withAnimation(.spring(response: 0.38, dampingFraction: 0.62)) {
+            mischiefCoord = center
+        }
+
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.55) {
+            guard self.boardSessionID == sessionID else { return }
+            for target in targets {
+                self.freezeTile(at: target)
+            }
+        }
+
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.15) {
+            guard self.boardSessionID == sessionID else { return }
+            withAnimation(.easeIn(duration: 0.28)) {
+                self.mischiefCoord = nil
+            }
+        }
+
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.45) {
+            guard self.boardSessionID == sessionID else { return }
+            self.isMischiefAnimating = false
+        }
+    }
+
+    private func nearbyNormalTiles(around center: Coord) -> [Coord] {
+        let rowRange = max(0, center.row - 1)...min(size - 1, center.row + 1)
+        let colRange = max(0, center.col - 1)...min(size - 1, center.col + 1)
+
+        return rowRange.flatMap { row in
+            colRange.compactMap { col -> Coord? in
+                let coord = Coord(row: row, col: col)
+                let tile = tiles[row][col]
+                guard coord != center,
+                      !tile.isGhost,
+                      !tile.isFrozen,
+                      !tile.isMatched,
+                      tile.color != .clear else {
+                    return nil
+                }
+                return coord
+            }
         }
     }
 }

@@ -6,13 +6,13 @@ struct EndPopupView: View {
     var starCount: Int
     var ghosts: Int
     var missionTarget: Int
+    var isClear: Bool
     var imageName: String
     var clearActionTitle: String = "Next Stage"
 
     var onNewGame: () -> Void
     var onClose: () -> Void          // Home
     let onClosePopup: () -> Void     // Close（×）
-    private var isClear: Bool { ghosts >= missionTarget }
 
     var body: some View {
         ZStack {
@@ -25,7 +25,7 @@ struct EndPopupView: View {
 
                 VStack(spacing: 18) {
 
-                    Text(isClear ? "Game Clear" : "Game Over")
+                    Text(isClear ? "Mission Clear" : "Game Over")
                         .font(.system(size: 28, weight: .heavy, design: .rounded))
                         .foregroundColor(
                             isClear
@@ -45,7 +45,7 @@ struct EndPopupView: View {
                         popupRow(icon: "chart.bar.fill", title: "Score", value: "\(score)")
                         popupRow(icon: "trophy.fill", title: "Best", value: "\(bestScore)")
                         popupRow(icon: "star.fill", title: "Stars", value: "\(starCount)")
-                        popupRow(icon: "sparkles", title: "Ghosts", value: "\(ghosts)")
+                        popupRow(icon: "sparkles", title: "Ghosts", value: "\(ghosts) / \(missionTarget)")
                     }
                     .padding(.horizontal, 30)
 
