@@ -38,7 +38,8 @@ struct HomeView: View {
                         title: "無名の魂",
                         message: "ぼくのこと思い出して",
                         imageSize: 96,
-                        cardWidth: 180
+                        cardWidth: 180,
+                        allowsTilt: true
                     )
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
