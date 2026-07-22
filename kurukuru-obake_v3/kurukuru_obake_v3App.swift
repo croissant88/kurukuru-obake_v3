@@ -11,7 +11,7 @@ import SwiftUI
 struct kurukuru_obake_v3App: App {
     var body: some Scene {
         WindowGroup {
-            ContentView()
+            RootView()
         }
     }
 }

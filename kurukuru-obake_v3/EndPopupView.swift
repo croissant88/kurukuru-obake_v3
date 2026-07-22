@@ -26,7 +26,7 @@ struct EndPopupView: View {
                 VStack(spacing: 18) {
 
                     Text(isClear ? "Mission Clear" : "Game Over")
-                        .font(.system(size: 28, weight: .heavy, design: .rounded))
+                        .font(.system(size: 28, weight: .heavy))
                         .foregroundColor(
                             isClear
                             ? .orange
@@ -52,7 +52,7 @@ struct EndPopupView: View {
                     // 🔘 ボタン
                     HStack(spacing: 20) {
                         Button(action: onNewGame) {
-                            Text(isClear ? clearActionTitle : "Retry")
+                            Text(isClear ? clearActionTitle : "リトライ")
                                 .font(.headline)
                                 .padding()
                                 .frame(width: 120)
@@ -62,7 +62,7 @@ struct EndPopupView: View {
                         }
 
                         Button(action: onClose) {
-                            Text("Home")
+                            Text("ホームへ")
                                 .font(.headline)
                                 .padding()
                                 .frame(width: 120)
@@ -109,6 +109,6 @@ struct EndPopupView: View {
             Text(value)
                 .foregroundStyle(Color.black.opacity(0.92))
         }
-        .font(.system(size: 16, weight: .medium, design: .rounded))
+        .font(.system(size: 16, weight: .medium))
     }
 }

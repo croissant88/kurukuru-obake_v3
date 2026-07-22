@@ -6,17 +6,46 @@
 //
 
 import AVFoundation
+import SwiftUI
+import Combine
 
-final class SoundManager: NSObject, AVAudioPlayerDelegate {
+final class SoundManager: NSObject, AVAudioPlayerDelegate, ObservableObject {
     static let shared = SoundManager()
 
     /// 既定の BGM（`KurukuruObake` フォルダに置く。同期グループなら自動でバンドルに入る）
     static let defaultBGMFileName = "Rain.aac"
 
+    private static let bgmEnabledKey = "bgmEnabled"
+    private static let seEnabledKey = "seEnabled"
+    private let defaultBGMVolume: Float = 0.4
+
+    @Published var isBGMEnabled: Bool {
+        didSet {
+            UserDefaults.standard.set(isBGMEnabled, forKey: Self.bgmEnabledKey)
+            applyBGMEnabledState()
+        }
+    }
+
+    @Published var isSEEnabled: Bool {
+        didSet {
+            UserDefaults.standard.set(isSEEnabled, forKey: Self.seEnabledKey)
+        }
+    }
+
     private var bgmPlayer: AVAudioPlayer?
     private var effectPlayers: [AVAudioPlayer] = []
+    private var preferredBGMName = SoundManager.defaultBGMFileName
 
     private override init() {
+        let defaults = UserDefaults.standard
+        if defaults.object(forKey: Self.bgmEnabledKey) == nil {
+            defaults.set(true, forKey: Self.bgmEnabledKey)
+        }
+        if defaults.object(forKey: Self.seEnabledKey) == nil {
+            defaults.set(true, forKey: Self.seEnabledKey)
+        }
+        isBGMEnabled = defaults.bool(forKey: Self.bgmEnabledKey)
+        isSEEnabled = defaults.bool(forKey: Self.seEnabledKey)
         super.init()
         NotificationCenter.default.addObserver(
             self,
@@ -30,7 +59,12 @@ final class SoundManager: NSObject, AVAudioPlayerDelegate {
     /// `name` は `"Rain.aac"` のように拡張子付き、または従来どおり拡張子なしのリソース名
     /// `-1` = 無限ループ（`AVAudioPlayer` の仕様）
     func playBGM(named name: String = SoundManager.defaultBGMFileName, volume: Float = 0.4) {
+        preferredBGMName = name
         if bgmPlayer?.isPlaying == true { return }
+        if let player = bgmPlayer, !isBGMEnabled {
+            player.volume = volume
+            return
+        }
 
         guard let url = Self.bundleURL(forFileName: name) else {
             print("BGM ファイル見つからない: \(name)")
@@ -44,7 +78,9 @@ final class SoundManager: NSObject, AVAudioPlayerDelegate {
             player.volume = volume
             player.prepareToPlay()
             bgmPlayer = player
-            player.play()
+            if isBGMEnabled {
+                player.play()
+            }
         } catch {
             print("BGM 再生エラー: \(error)")
         }
@@ -59,6 +95,7 @@ final class SoundManager: NSObject, AVAudioPlayerDelegate {
 
         switch type {
         case .ended:
+            guard isBGMEnabled else { return }
             try? configureSessionForBGM()
             if let p = bgmPlayer, !p.isPlaying {
                 p.play()
@@ -72,6 +109,7 @@ final class SoundManager: NSObject, AVAudioPlayerDelegate {
 
     func audioPlayerDidFinishPlaying(_ player: AVAudioPlayer, successfully flag: Bool) {
         if player === bgmPlayer {
+            guard isBGMEnabled else { return }
             // `numberOfLoops == -1` では通常呼ばれないが、念のため先頭から繰り返す
             player.currentTime = 0
             player.numberOfLoops = -1
@@ -102,10 +140,27 @@ final class SoundManager: NSObject, AVAudioPlayerDelegate {
     // 🔇 BGM 停止
     func stopBGM() {
         bgmPlayer?.stop()
+        bgmPlayer = nil
+    }
+
+    private func applyBGMEnabledState() {
+        if isBGMEnabled {
+            if let player = bgmPlayer {
+                player.volume = defaultBGMVolume
+                if !player.isPlaying {
+                    player.play()
+                }
+            } else {
+                playBGM(named: preferredBGMName, volume: defaultBGMVolume)
+            }
+        } else {
+            bgmPlayer?.pause()
+        }
     }
 
     // 🔊 効果音再生（同時再生可）
     func playEffect(named name: String, volume: Float = 1.0) {
+        guard isSEEnabled else { return }
         guard let url = Bundle.main.url(forResource: name, withExtension: nil) else {
             print("効果音見つからない: \(name)")
             return

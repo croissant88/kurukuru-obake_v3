@@ -16,7 +16,7 @@ struct ScorePopup: View {
     
     var body: some View {
         Text("+\(points)")
-            .font(.system(size: 20, weight: .heavy, design: .rounded))
+            .font(.system(size: 20, weight: .heavy))
             .foregroundColor(.white)
 //            .shadow(color: .orange.opacity(0.8), radius: 8, y: 2)
             .opacity(fadeOut ? 0 : 1)

@@ -5,6 +5,8 @@ struct ContentView: View {
     private let bestScoreKey = "bestScore"
     private let moveLimit = 23
 
+    var onGoHome: () -> Void = {}
+
     @StateObject private var board = GameBoard()
     @State private var dragColor: Color? = nil
     @State private var selected: [Coord] = []
@@ -17,6 +19,8 @@ struct ContentView: View {
     @State private var playLockedAfterEnd = false
     @State private var showMissionBriefing = true
     @State private var missionBriefingOpacity: Double = 1.0
+    @State private var showSettingsMenu = false
+    @State private var showHomeConfirm = false
     private let playTimer = Timer.publish(every: 0.2, on: .main, in: .common).autoconnect()
     private let impactFeedback = UIImpactFeedbackGenerator(style: .light)
 
@@ -40,6 +44,8 @@ struct ContentView: View {
             && !board.isMissionClearPending
             && !board.isMischiefAnimating
             && !playLockedAfterEnd
+            && !showSettingsMenu
+            && !showHomeConfirm
     }
 
     private var boardPixelSide: CGFloat {
@@ -73,14 +79,14 @@ struct ContentView: View {
                     .padding(.bottom, 8)
 
                 Text("ミッション　魂を \(board.missionTarget) 体解放")
-                    .font(.system(size: 15, weight: .semibold, design: .rounded))
+                    .font(.system(size: 15, weight: .semibold))
                     .foregroundColor(.white.opacity(0.95))
                     .multilineTextAlignment(.center)
                     .frame(width: boardDisplayWidth, alignment: .center)
                     .frame(minHeight: 22, alignment: .center)
 
                 Text("残り \(moveLimit - moveCount) 手")
-                    .font(.system(size: 20, weight: .bold, design: .rounded))
+                    .font(.system(size: 20, weight: .bold))
                     .foregroundColor(.white)
                     .frame(width: boardDisplayWidth, alignment: .center)
                     .padding(.bottom, 12)
@@ -88,19 +94,19 @@ struct ContentView: View {
                 HStack(alignment: .firstTextBaseline) {
                     HStack(alignment: .firstTextBaseline, spacing: 6) {
                         Text("Score")
-                            .font(.system(size: 13, weight: .semibold, design: .rounded))
+                            .font(.system(size: 13, weight: .semibold))
                             .foregroundColor(.white.opacity(0.85))
                         Text("\(board.score)")
-                            .font(.system(size: 20, weight: .bold, design: .rounded))
+                            .font(.system(size: 20, weight: .bold))
                             .foregroundColor(.white)
                     }
                     Spacer(minLength: 12)
                     HStack(alignment: .firstTextBaseline, spacing: 6) {
                         Text("Best Score")
-                            .font(.system(size: 13, weight: .semibold, design: .rounded))
+                            .font(.system(size: 13, weight: .semibold))
                             .foregroundColor(.white.opacity(0.85))
                         Text("\(bestScore)")
-                            .font(.system(size: 20, weight: .bold, design: .rounded))
+                            .font(.system(size: 20, weight: .bold))
                             .foregroundColor(.white.opacity(0.92))
                     }
                 }
@@ -154,7 +160,35 @@ struct ContentView: View {
 
                 Spacer()
             }
-            .blur(radius: showEndPopup ? 8 : 0)
+            .blur(radius: showEndPopup || showSettingsMenu ? 8 : 0)
+
+            // 右上設定
+            if !showEndPopup {
+                VStack {
+                    HStack {
+                        Spacer()
+                        Button {
+                            withAnimation(.easeOut(duration: 0.2)) {
+                                showSettingsMenu = true
+                            }
+                        } label: {
+                            Image(systemName: "gearshape.fill")
+                                .font(.system(size: 20, weight: .semibold))
+                                .foregroundStyle(.white.opacity(0.92))
+                                .frame(width: 40, height: 40)
+                                .background(
+                                    Circle()
+                                        .fill(Color.black.opacity(0.28))
+                                )
+                        }
+                        .buttonStyle(.plain)
+                        .padding(.top, 48)
+                        .padding(.trailing, 18)
+                    }
+                    Spacer()
+                }
+                .zIndex(30)
+            }
 
             if showMissionBriefing {
                 ZStack {
@@ -165,10 +199,10 @@ struct ContentView: View {
 
                     VStack(spacing: 10) {
                         Text("\(moveLimit)手ミッション")
-                            .font(.system(size: 15, weight: .semibold, design: .rounded))
+                            .font(.system(size: 15, weight: .semibold))
                             .foregroundColor(.white.opacity(0.85))
                         Text("魂を \(board.missionTarget) 体解放")
-                            .font(.system(size: 22, weight: .bold, design: .rounded))
+                            .font(.system(size: 22, weight: .bold))
                             .foregroundColor(.white)
                     }
                     .padding(.horizontal, 28)
@@ -199,7 +233,7 @@ struct ContentView: View {
                     clearActionTitle: "次へ",
                     onNewGame: { resetGame() },
                     onClose: {
-                        resetGame()
+                        onGoHome()
                     },
                     onClosePopup: {
                         endPopupDismissed = true
@@ -219,6 +253,37 @@ struct ContentView: View {
                         }
                     }
             }
+
+            if board.showYukionnaIntroCard {
+                YukionnaIntroCardView()
+                    .transition(.opacity)
+                    .zIndex(40)
+            }
+
+            if showSettingsMenu {
+                PlaySettingsMenuView(
+                    onHome: {
+                        showHomeConfirm = true
+                    },
+                    onClose: {
+                        withAnimation(.easeOut(duration: 0.2)) {
+                            showSettingsMenu = false
+                        }
+                    }
+                )
+                .zIndex(50)
+                .transition(.opacity)
+            }
+        }
+        .alert("ホームに戻りますか？", isPresented: $showHomeConfirm) {
+            Button("キャンセル", role: .cancel) {}
+            Button("ホームへ", role: .destructive) {
+                showSettingsMenu = false
+                SoundManager.shared.stopBGM()
+                onGoHome()
+            }
+        } message: {
+            Text("現在のプレイは終了します。")
         }
         .onChange(of: board.score) { _, newScore in
             let currentBest = UserDefaults.standard.integer(forKey: bestScoreKey)
@@ -276,6 +341,8 @@ struct ContentView: View {
             playLockedAfterEnd = false
             selected.removeAll()
             dragColor = nil
+            showSettingsMenu = false
+            showHomeConfirm = false
         }
         scheduleMissionBriefingDismissal()
     }

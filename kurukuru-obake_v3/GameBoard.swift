@@ -39,12 +39,14 @@ class GameBoard: ObservableObject {
     @Published var isMissionClearPending = false
     @Published var mischiefCoord: Coord?
     @Published var isMischiefAnimating = false
+    @Published var showYukionnaIntroCard = false
     @Published var popups: [ScorePopupData] = []
 
     let size = 8
-    private let maxFrozenTiles = 8
+    private let maxFrozenTiles = 10
     private var movesUntilMischief = Int.random(in: 3...5)
     private var isPlayerMovePending = false
+    private var hasShownYukionnaIntro = false
     private var boardSessionID = UUID()
     
     init() {
@@ -59,6 +61,8 @@ class GameBoard: ObservableObject {
         isMissionClearPending = false
         mischiefCoord = nil
         isMischiefAnimating = false
+        showYukionnaIntroCard = false
+        hasShownYukionnaIntro = false
         tiles = (0..<size).map { row in
             (0..<size).map { col in
                 var tile = Tile(color: GameColors.all.randomElement() ?? .blue)
@@ -108,6 +112,7 @@ class GameBoard: ObservableObject {
         
         if ghostCount > 0 {
             unlockedGhosts += ghostCount
+            PlayerRecords.addGhosts(ghostCount)
             if unlockedGhosts >= missionTarget {
                 isMissionClearPending = true
             }
@@ -116,6 +121,7 @@ class GameBoard: ObservableObject {
         // 星のカウント（通常タイル＝色つき）とスコア
         let normalCount = uniqueCoords.count - ghostCount
         collectedStars += normalCount
+        PlayerRecords.addStars(normalCount)
         let n = uniqueCoords.count
         // 長く繋ぐほど伸びる（3個より多い分にボーナス）
         let lengthBonus = n > 3 ? (n - 3) * 8 : 0
@@ -299,14 +305,14 @@ class GameBoard: ObservableObject {
                 guard tile.isGhost,
                       !tile.isFrozen,
                       !tile.isMatched,
-                      nearbyNormalTiles(around: coord).count >= 3 else {
+                      nearbyNormalTiles(around: coord).count >= 4 else {
                     return nil
                 }
                 return coord
             }
         }
 
-        guard maxFrozenTiles - frozenTileCount >= 4,
+        guard maxFrozenTiles - frozenTileCount >= 5,
               let center = availableGhostCenters.randomElement() else {
             movesUntilMischief = 2
             return
@@ -314,35 +320,66 @@ class GameBoard: ObservableObject {
 
         let nearbyTargets = nearbyNormalTiles(around: center)
             .shuffled()
-            .prefix(3)
+            .prefix(4)
         let targets = [center] + Array(nearbyTargets)
 
         movesUntilMischief = Int.random(in: 3...5)
         isMischiefAnimating = true
         let sessionID = boardSessionID
-
-        withAnimation(.spring(response: 0.38, dampingFraction: 0.62)) {
-            mischiefCoord = center
+        let shouldShowIntro = !hasShownYukionnaIntro
+        if shouldShowIntro {
+            hasShownYukionnaIntro = true
         }
+
         SoundManager.shared.playEffect(named: "yuurei.mp3")
 
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.55) {
-            guard self.boardSessionID == sessionID else { return }
-            for target in targets {
-                self.freezeTile(at: target)
+        if shouldShowIntro {
+            withAnimation(.easeOut(duration: 0.2)) {
+                showYukionnaIntroCard = true
             }
-        }
 
-        DispatchQueue.main.asyncAfter(deadline: .now() + 1.15) {
-            guard self.boardSessionID == sessionID else { return }
-            withAnimation(.easeIn(duration: 0.28)) {
-                self.mischiefCoord = nil
+            // カードが中央で止まったあたりで凍結
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.70) {
+                guard self.boardSessionID == sessionID else { return }
+                for target in targets {
+                    self.freezeTile(at: target)
+                }
             }
-        }
 
-        DispatchQueue.main.asyncAfter(deadline: .now() + 1.45) {
-            guard self.boardSessionID == sessionID else { return }
-            self.isMischiefAnimating = false
+            DispatchQueue.main.asyncAfter(deadline: .now() + 2.15) {
+                guard self.boardSessionID == sessionID else { return }
+                withAnimation(.easeIn(duration: 0.2)) {
+                    self.showYukionnaIntroCard = false
+                }
+            }
+
+            DispatchQueue.main.asyncAfter(deadline: .now() + 2.40) {
+                guard self.boardSessionID == sessionID else { return }
+                self.isMischiefAnimating = false
+            }
+        } else {
+            withAnimation(.spring(response: 0.38, dampingFraction: 0.62)) {
+                mischiefCoord = center
+            }
+
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.55) {
+                guard self.boardSessionID == sessionID else { return }
+                for target in targets {
+                    self.freezeTile(at: target)
+                }
+            }
+
+            DispatchQueue.main.asyncAfter(deadline: .now() + 1.15) {
+                guard self.boardSessionID == sessionID else { return }
+                withAnimation(.easeIn(duration: 0.28)) {
+                    self.mischiefCoord = nil
+                }
+            }
+
+            DispatchQueue.main.asyncAfter(deadline: .now() + 1.45) {
+                guard self.boardSessionID == sessionID else { return }
+                self.isMischiefAnimating = false
+            }
         }
     }
 
