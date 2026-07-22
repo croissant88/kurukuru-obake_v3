@@ -275,7 +275,6 @@ struct ContentView: View {
             Button("キャンセル", role: .cancel) {}
             Button("ホームへ", role: .destructive) {
                 showSettingsMenu = false
-                SoundManager.shared.stopBGM()
                 onGoHome()
             }
         } message: {
@@ -289,6 +288,7 @@ struct ContentView: View {
         }
         .onAppear {
             scheduleMissionBriefingDismissal()
+            // BGM は Home で開始済み。未再生時のみ保険で開始する
             SoundManager.shared.playBGM()
         }
         .onChange(of: board.isGameOver) { _, isGameOverNow in

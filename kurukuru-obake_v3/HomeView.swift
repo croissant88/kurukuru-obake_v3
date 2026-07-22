@@ -72,6 +72,9 @@ struct HomeView: View {
                 .padding(.bottom, 36)
             }
         }
+        .onAppear {
+            SoundManager.shared.playBGM()
+        }
     }
 
     private func homeStatRow(title: String, value: Int) -> some View {

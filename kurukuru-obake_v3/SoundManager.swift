@@ -61,8 +61,11 @@ final class SoundManager: NSObject, AVAudioPlayerDelegate, ObservableObject {
     func playBGM(named name: String = SoundManager.defaultBGMFileName, volume: Float = 0.4) {
         preferredBGMName = name
         if bgmPlayer?.isPlaying == true { return }
-        if let player = bgmPlayer, !isBGMEnabled {
+        if let player = bgmPlayer {
             player.volume = volume
+            if isBGMEnabled, !player.isPlaying {
+                player.play()
+            }
             return
         }
 
@@ -70,19 +73,31 @@ final class SoundManager: NSObject, AVAudioPlayerDelegate, ObservableObject {
             print("BGM ファイル見つからない: \(name)")
             return
         }
-        do {
-            try configureSessionForBGM()
-            let player = try AVAudioPlayer(contentsOf: url)
-            player.delegate = self
-            player.numberOfLoops = -1
-            player.volume = volume
-            player.prepareToPlay()
-            bgmPlayer = player
-            if isBGMEnabled {
-                player.play()
+
+        // 大きい音源でもUIを止めないよう、ファイル準備だけバックグラウンドで行う
+        DispatchQueue.global(qos: .userInitiated).async { [weak self] in
+            guard let self else { return }
+            do {
+                let player = try AVAudioPlayer(contentsOf: url)
+                player.numberOfLoops = -1
+                player.volume = volume
+                player.prepareToPlay()
+                DispatchQueue.main.async {
+                    if self.bgmPlayer != nil { return }
+                    do {
+                        try self.configureSessionForBGM()
+                    } catch {
+                        print("BGM セッションエラー: \(error)")
+                    }
+                    player.delegate = self
+                    self.bgmPlayer = player
+                    if self.isBGMEnabled {
+                        player.play()
+                    }
+                }
+            } catch {
+                print("BGM 再生エラー: \(error)")
             }
-        } catch {
-            print("BGM 再生エラー: \(error)")
         }
     }
 

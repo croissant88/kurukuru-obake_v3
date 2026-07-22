@@ -20,21 +20,14 @@ struct RootView: View {
             case .home:
                 HomeView {
                     playSessionID = UUID()
-                    withAnimation(.easeInOut(duration: 0.25)) {
-                        screen = .play
-                    }
+                    screen = .play
                 }
-                .transition(.opacity)
 
             case .play:
                 ContentView(onGoHome: {
-                    SoundManager.shared.stopBGM()
-                    withAnimation(.easeInOut(duration: 0.25)) {
-                        screen = .home
-                    }
+                    screen = .home
                 })
                 .id(playSessionID)
-                .transition(.opacity)
             }
         }
     }
