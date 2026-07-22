@@ -71,11 +71,35 @@ struct ContentView: View {
             GameBackgrounds.starry.ignoresSafeArea()
 
             VStack(spacing: 12) {
+                HStack {
+                    Spacer()
+                    if !showEndPopup {
+                        Button {
+                            withAnimation(.easeOut(duration: 0.2)) {
+                                showSettingsMenu = true
+                            }
+                        } label: {
+                            Image(systemName: "gearshape.fill")
+                                .font(.system(size: 18, weight: .semibold))
+                                .foregroundStyle(.white.opacity(0.92))
+                                .frame(width: 36, height: 36)
+                                .background(
+                                    Circle()
+                                        .fill(Color.black.opacity(0.28))
+                                )
+                        }
+                        .buttonStyle(.plain)
+                    }
+                }
+                .padding(.top, 12)
+                .padding(.trailing, 16)
+                .frame(height: 36)
+
                 Image("kurukuruobake_01")
                     .resizable()
                     .scaledToFit()
                     .frame(height: 60)
-                    .padding(.top, 40)
+                    .padding(.top, 4)
                     .padding(.bottom, 8)
 
                 Text("ミッション　魂を \(board.missionTarget) 体解放")
@@ -161,34 +185,6 @@ struct ContentView: View {
                 Spacer()
             }
             .blur(radius: showEndPopup || showSettingsMenu ? 8 : 0)
-
-            // 右上設定
-            if !showEndPopup {
-                VStack {
-                    HStack {
-                        Spacer()
-                        Button {
-                            withAnimation(.easeOut(duration: 0.2)) {
-                                showSettingsMenu = true
-                            }
-                        } label: {
-                            Image(systemName: "gearshape.fill")
-                                .font(.system(size: 20, weight: .semibold))
-                                .foregroundStyle(.white.opacity(0.92))
-                                .frame(width: 40, height: 40)
-                                .background(
-                                    Circle()
-                                        .fill(Color.black.opacity(0.28))
-                                )
-                        }
-                        .buttonStyle(.plain)
-                        .padding(.top, 48)
-                        .padding(.trailing, 18)
-                    }
-                    Spacer()
-                }
-                .zIndex(30)
-            }
 
             if showMissionBriefing {
                 ZStack {

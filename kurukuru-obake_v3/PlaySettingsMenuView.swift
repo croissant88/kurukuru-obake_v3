@@ -23,14 +23,27 @@ struct PlaySettingsMenuView: View {
                 }
 
                 Button(action: onHome) {
-                    Text("Home")
+                    Text("ホーム")
                         .font(.system(size: 18, weight: .bold))
                         .foregroundStyle(.white)
                         .frame(maxWidth: .infinity)
                         .padding(.vertical, 14)
                         .background(
                             RoundedRectangle(cornerRadius: 12, style: .continuous)
-                                .fill(Color(hex: "4a9fe8"))
+                                .fill(
+                                    LinearGradient(
+                                        colors: [
+                                            Color(hex: "6b7fd7"),
+                                            Color(hex: "8b6bb8")
+                                        ],
+                                        startPoint: .top,
+                                        endPoint: .bottom
+                                    )
+                                )
+                        )
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 12, style: .continuous)
+                                .stroke(Color(hex: "a8addc"), lineWidth: 1)
                         )
                 }
                 .buttonStyle(.plain)
