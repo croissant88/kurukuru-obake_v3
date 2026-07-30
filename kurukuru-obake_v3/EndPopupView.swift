@@ -18,6 +18,12 @@ struct EndPopupView: View {
             Color.black.opacity(0.4)
                 .ignoresSafeArea()
 
+            // Clear 時だけカードまわりにスパークル
+            if isClear {
+                SoulAscendView()
+                    .zIndex(1)
+            }
+
             // 🪟 ポップアップ本体
             ZStack(alignment: .topTrailing) {
 
@@ -87,6 +93,7 @@ struct EndPopupView: View {
                         .padding(12)
                 }
             }
+            .zIndex(2)
         }
     }
 

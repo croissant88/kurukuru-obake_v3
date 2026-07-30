@@ -40,7 +40,7 @@ class GameBoard: ObservableObject {
     @Published var mischiefCoord: Coord?
     @Published var isMischiefAnimating = false
     @Published var showYukionnaIntroCard = false
-    /// Clear で初めてゲットしたおともだちの紹介
+    /// Clear で初めて出会った相手の紹介
     @Published var showFriendGetCard = false
     @Published var newlyBefriendedFriend: FriendID?
     @Published var popups: [ScorePopupData] = []
@@ -120,7 +120,7 @@ class GameBoard: ObservableObject {
         isGameOverPending = false
         isMissionClearPending = false
 
-        // 初ゲットは Clear より先に見せる
+        // Clear 時：お友だちカード → 結果ポップ（スパークルはポップ表示中）
         if didClear, let friend = mission.rewardFriend, FriendRecords.befriend(friend) {
             newlyBefriendedFriend = friend
             withAnimation(.easeOut(duration: 0.2)) {
@@ -137,7 +137,7 @@ class GameBoard: ObservableObject {
         }
     }
 
-    /// ゲット演出のあと Clear / Over ポップへ
+    /// お友だち演出のあと Clear ポップへ
     func finishFriendGetAndShowResult() {
         guard showFriendGetCard else { return }
         withAnimation(.easeOut(duration: 0.2)) {
