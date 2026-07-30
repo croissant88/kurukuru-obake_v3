@@ -3,7 +3,6 @@ import Combine
 
 struct ContentView: View {
     private let bestScoreKey = "bestScore"
-    private let moveLimit = 23
 
     var onGoHome: () -> Void = {}
 
@@ -18,11 +17,14 @@ struct ContentView: View {
     @State private var endPopupDismissed = false
     @State private var playLockedAfterEnd = false
     @State private var showMissionBriefing = true
-    @State private var missionBriefingOpacity: Double = 1.0
     @State private var showSettingsMenu = false
     @State private var showHomeConfirm = false
     private let playTimer = Timer.publish(every: 0.2, on: .main, in: .common).autoconnect()
     private let impactFeedback = UIImpactFeedbackGenerator(style: .light)
+
+    private var moveLimit: Int {
+        board.mission.moveLimit
+    }
 
     private var timeString: String {
         let s = displayElapsedSeconds
@@ -43,6 +45,7 @@ struct ContentView: View {
             && !board.isGameOverPending
             && !board.isMissionClearPending
             && !board.isMischiefAnimating
+            && !board.showFriendGetCard
             && !playLockedAfterEnd
             && !showSettingsMenu
             && !showHomeConfirm
@@ -102,8 +105,13 @@ struct ContentView: View {
                     .padding(.top, 4)
                     .padding(.bottom, 8)
 
-                Text("ミッション　魂を \(board.missionTarget) 体解放")
-                    .font(.system(size: 15, weight: .semibold))
+                Text(board.mission.headline)
+                    .font(.system(size: 13, weight: .semibold))
+                    .foregroundColor(.white.opacity(0.75))
+                    .frame(width: boardDisplayWidth, alignment: .center)
+
+                Text(board.mission.shortTitle)
+                    .font(.system(size: 16, weight: .bold))
                     .foregroundColor(.white.opacity(0.95))
                     .multilineTextAlignment(.center)
                     .frame(width: boardDisplayWidth, alignment: .center)
@@ -188,21 +196,31 @@ struct ContentView: View {
 
             if showMissionBriefing {
                 ZStack {
-                    Color.clear
-                        .contentShape(Rectangle())
+                    Color.black.opacity(0.35)
                         .ignoresSafeArea()
-                        .allowsHitTesting(missionBriefingOpacity > 0.08)
+                        .contentShape(Rectangle())
 
-                    VStack(spacing: 10) {
-                        Text("\(moveLimit)手ミッション")
-                            .font(.system(size: 15, weight: .semibold))
-                            .foregroundColor(.white.opacity(0.85))
-                        Text("魂を \(board.missionTarget) 体解放")
+                    VStack(spacing: 12) {
+                        Text(board.mission.headline)
+                            .font(.system(size: 14, weight: .semibold))
+                            .foregroundColor(.white.opacity(0.8))
+                        Text(board.mission.shortTitle)
                             .font(.system(size: 22, weight: .bold))
                             .foregroundColor(.white)
+                        Text(board.mission.body)
+                            .font(.system(size: 15, weight: .medium))
+                            .foregroundColor(.white.opacity(0.92))
+                            .multilineTextAlignment(.center)
+                            .lineSpacing(4)
+                            .padding(.top, 4)
+                        Text("魂 \(board.missionTarget) 体　／　\(moveLimit) 手")
+                            .font(.system(size: 13, weight: .semibold))
+                            .foregroundColor(.white.opacity(0.7))
+                            .padding(.top, 6)
                     }
                     .padding(.horizontal, 28)
-                    .padding(.vertical, 24)
+                    .padding(.vertical, 26)
+                    .frame(maxWidth: 320)
                     .background(
                         RoundedRectangle(cornerRadius: 18, style: .continuous)
                             .fill(Color.black.opacity(0.78))
@@ -211,23 +229,26 @@ struct ContentView: View {
                         RoundedRectangle(cornerRadius: 18, style: .continuous)
                             .stroke(Color.white.opacity(0.22), lineWidth: 1)
                     )
-                    .opacity(missionBriefingOpacity)
                 }
-                .allowsHitTesting(missionBriefingOpacity > 0.08)
+                .contentShape(Rectangle())
+                .onTapGesture {
+                    dismissMissionBriefing()
+                }
                 .transition(.opacity)
             }
 
             if showEndPopup {
                 EndPopupView(
-                    score: board.score,
-                    bestScore: UserDefaults.standard.integer(forKey: bestScoreKey),
                     starCount: board.collectedStars,
                     ghosts: board.unlockedGhosts,
                     missionTarget: board.missionTarget,
                     isClear: board.unlockedGhosts >= board.missionTarget,
                     imageName: endPopupImageName,
                     clearActionTitle: "次へ",
-                    onNewGame: { resetGame() },
+                    onNewGame: {
+                        let didClear = board.unlockedGhosts >= board.missionTarget
+                        resetGame(keepMission: !didClear)
+                    },
                     onClose: {
                         onGoHome()
                     },
@@ -256,8 +277,17 @@ struct ContentView: View {
                     .zIndex(40)
             }
 
+            if board.showFriendGetCard, let friend = board.newlyBefriendedFriend {
+                FriendGetCardView(friend: friend) {
+                    board.finishFriendGetAndShowResult()
+                }
+                .transition(.opacity)
+                .zIndex(55)
+            }
+
             if showSettingsMenu {
                 PlaySettingsMenuView(
+                    mission: board.mission,
                     onHome: {
                         showHomeConfirm = true
                     },
@@ -287,13 +317,18 @@ struct ContentView: View {
             }
         }
         .onAppear {
-            scheduleMissionBriefingDismissal()
+            presentMissionBriefing()
             // BGM は Home で開始済み。未再生時のみ保険で開始する
             SoundManager.shared.playBGM()
         }
         .onChange(of: board.isGameOver) { _, isGameOverNow in
             guard isGameOverNow else { return }
-            endPopupImageName = ["clear_01", "clear_02", "clear_03"].randomElement() ?? "clear_01"
+            let didClear = board.unlockedGhosts >= board.missionTarget
+            if didClear {
+                endPopupImageName = ["clear_01", "clear_02", "clear_03"].randomElement() ?? "clear_01"
+            } else {
+                endPopupImageName = ["over_01", "over_02", "over_03"].randomElement() ?? "over_01"
+            }
         }
         .onReceive(playTimer) { _ in
             guard !showMissionBriefing,
@@ -305,28 +340,25 @@ struct ContentView: View {
         }
     }
 
-    private func scheduleMissionBriefingDismissal() {
+    private func presentMissionBriefing() {
         showMissionBriefing = true
-        missionBriefingOpacity = 1
-        let fadeDelay: TimeInterval = 1.15
-        let fadeDuration: TimeInterval = 0.75
-        DispatchQueue.main.asyncAfter(deadline: .now() + fadeDelay) {
-            withAnimation(.easeOut(duration: fadeDuration)) {
-                missionBriefingOpacity = 0
-            }
-        }
-        DispatchQueue.main.asyncAfter(deadline: .now() + fadeDelay + fadeDuration) {
-            showMissionBriefing = false
-            gameStartTime = Date()
-            displayElapsedSeconds = 0
-        }
+        gameStartTime = nil
+        displayElapsedSeconds = 0
     }
 
-    private func resetGame() {
+    private func dismissMissionBriefing() {
+        withAnimation(.easeOut(duration: 0.2)) {
+            showMissionBriefing = false
+        }
+        gameStartTime = Date()
+        displayElapsedSeconds = 0
+    }
+
+    private func resetGame(keepMission: Bool = false) {
         withAnimation {
             board.isGameOver = false
             board.isGameOverPending = false
-            board.resetBoard()
+            board.resetBoard(keepMission: keepMission)
             board.score = 0
             board.collectedStars = 0
             board.unlockedGhosts = 0
@@ -340,7 +372,7 @@ struct ContentView: View {
             showSettingsMenu = false
             showHomeConfirm = false
         }
-        scheduleMissionBriefingDismissal()
+        presentMissionBriefing()
     }
 
     private func handleDrag(at location: CGPoint, size: CGFloat, spacing: CGFloat) {

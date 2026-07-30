@@ -10,6 +10,8 @@ struct SpiritGlassCard: View {
     var imageName: String
     var title: String
     var message: String
+    /// タイトル上の小見出し（任意）
+    var subtitle: String? = nil
     var imageSize: CGFloat = 120
     var cardWidth: CGFloat = 196
     /// Homeなど：指でポケモンカード風に傾けられる
@@ -43,7 +45,7 @@ struct SpiritGlassCard: View {
 
     private var estimatedHeight: CGFloat {
         // 画像＋余白＋文字のおおよその高さ（レイアウト用）
-        imageSize + 140
+        imageSize + 140 + (subtitle == nil ? 0 : 22)
     }
 
     private func cardBody(size: CGSize) -> some View {
@@ -53,9 +55,17 @@ struct SpiritGlassCard: View {
                 .scaledToFit()
                 .frame(width: imageSize, height: imageSize)
 
-            Text(title)
-                .font(.system(size: 24, weight: .bold))
-                .foregroundStyle(titleColor)
+            VStack(spacing: 6) {
+                if let subtitle, !subtitle.isEmpty {
+                    Text(subtitle)
+                        .font(.system(size: 12, weight: .semibold))
+                        .foregroundStyle(subtitleColor)
+                }
+
+                Text(title)
+                    .font(.system(size: 24, weight: .bold))
+                    .foregroundStyle(titleColor)
+            }
 
             Text(message)
                 .font(.system(size: 13, weight: .medium))

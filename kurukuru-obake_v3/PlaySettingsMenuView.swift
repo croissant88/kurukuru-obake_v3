@@ -7,6 +7,7 @@ import SwiftUI
 
 struct PlaySettingsMenuView: View {
     @ObservedObject var sound = SoundManager.shared
+    var mission: Mission
     var onHome: () -> Void
     var onClose: () -> Void
 
@@ -16,11 +17,37 @@ struct PlaySettingsMenuView: View {
                 .ignoresSafeArea()
                 .onTapGesture(perform: onClose)
 
-            VStack(spacing: 22) {
+            VStack(spacing: 20) {
                 HStack(spacing: 28) {
                     toggleColumn(title: "BGM", isOn: $sound.isBGMEnabled)
                     toggleColumn(title: "SE", isOn: $sound.isSEEnabled)
                 }
+
+                VStack(spacing: 8) {
+                    Text(mission.headline)
+                        .font(.system(size: 12, weight: .semibold))
+                        .foregroundStyle(.primary.opacity(0.55))
+                    Text(mission.shortTitle)
+                        .font(.system(size: 16, weight: .bold))
+                        .foregroundStyle(.primary.opacity(0.92))
+                        .multilineTextAlignment(.center)
+                    Text(mission.body)
+                        .font(.system(size: 13, weight: .medium))
+                        .foregroundStyle(.primary.opacity(0.78))
+                        .multilineTextAlignment(.center)
+                        .lineSpacing(3)
+                    Text("魂 \(mission.ghostTarget) 体　／　\(mission.moveLimit) 手")
+                        .font(.system(size: 12, weight: .semibold))
+                        .foregroundStyle(.primary.opacity(0.5))
+                        .padding(.top, 2)
+                }
+                .padding(.horizontal, 4)
+                .padding(.vertical, 12)
+                .frame(maxWidth: .infinity)
+                .background(
+                    RoundedRectangle(cornerRadius: 12, style: .continuous)
+                        .fill(Color.primary.opacity(0.06))
+                )
 
                 Button(action: onHome) {
                     Text("ホーム")
@@ -50,7 +77,7 @@ struct PlaySettingsMenuView: View {
             }
             .padding(.horizontal, 28)
             .padding(.vertical, 26)
-            .frame(width: 280)
+            .frame(width: 300)
             .background(
                 RoundedRectangle(cornerRadius: 22, style: .continuous)
                     .fill(.ultraThinMaterial)

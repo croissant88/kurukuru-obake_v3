@@ -11,6 +11,14 @@ struct HomeView: View {
     @AppStorage(PlayerRecords.totalGhostsKey) private var totalGhosts = 0
     @AppStorage(PlayerRecords.totalStarsKey) private var totalStars = 0
 
+    private var playerLevel: Int {
+        PlayerLevel.level(forTotalGhosts: totalGhosts)
+    }
+
+    private var playerTitle: String {
+        PlayerLevel.title(forTotalGhosts: totalGhosts)
+    }
+
     var body: some View {
         ZStack {
             GameBackgrounds.starry.ignoresSafeArea()
@@ -23,12 +31,26 @@ struct HomeView: View {
                     .frame(height: 60)
                     .padding(.top, 40)
                     .padding(.bottom, 8)
+                    .onLongPressGesture(minimumDuration: 0.8) {
+                        // TODO: 本番前に削除 — テスト用おともだちリセット
+                        FriendRecords.resetAllFriends()
+                    }
+
+                VStack(spacing: 6) {
+                    Text("Lv.\(playerLevel)")
+                        .font(.system(size: 28, weight: .bold))
+                        .foregroundStyle(.white)
+                    Text(playerTitle)
+                        .font(.system(size: 15, weight: .semibold))
+                        .foregroundStyle(.white.opacity(0.9))
+                }
+                .padding(.top, 12)
 
                 VStack(spacing: 10) {
                     homeStatRow(title: "解放した魂", value: totalGhosts)
                     homeStatRow(title: "散った星屑", value: totalStars)
                 }
-                .padding(.top, 28)
+                .padding(.top, 16)
                 .padding(.horizontal, 36)
 
                 // 統計〜START のあいだの中央にカード

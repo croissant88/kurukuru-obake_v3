@@ -1,8 +1,6 @@
 import SwiftUI
 
 struct EndPopupView: View {
-    var score: Int
-    var bestScore: Int
     var starCount: Int
     var ghosts: Int
     var missionTarget: Int
@@ -40,10 +38,7 @@ struct EndPopupView: View {
                         .scaledToFit()
                         .frame(height: 120)
 
-                    // 📊 スコア表示（絵文字は環境で ? になることがあるため SF Symbols を使用）
                     VStack(alignment: .leading, spacing: 12) {
-                        popupRow(icon: "chart.bar.fill", title: "Score", value: "\(score)")
-                        popupRow(icon: "trophy.fill", title: "Best", value: "\(bestScore)")
                         popupRow(icon: "star.fill", title: "Stars", value: "\(starCount)")
                         popupRow(icon: "sparkles", title: "Ghosts", value: "\(ghosts) / \(missionTarget)")
                     }

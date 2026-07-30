@@ -26,7 +26,8 @@ struct YukionnaIntroCardView: View {
                 SpiritGlassCard(
                     imageName: "yukionna",
                     title: "雪女",
-                    message: "凍てつく夜　君のそばで眠らせて",
+                    message: FriendID.yukionna.visitMessage,
+                    subtitle: FriendID.yukionna.visitSubtitle,
                     cardWidth: cardWidth
                 )
                 .offset(x: offsetX)

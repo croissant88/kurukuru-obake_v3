@@ -33,45 +33,81 @@ class GameBoard: ObservableObject {
     @Published var score: Int = 0
     @Published var collectedStars: Int = 0
     @Published var unlockedGhosts: Int = 0
-    @Published var missionTarget = 26
+    @Published var mission: Mission = MissionCatalog.missionForCurrentProgress()
     @Published var isGameOver = false
     @Published var isGameOverPending = false
     @Published var isMissionClearPending = false
     @Published var mischiefCoord: Coord?
     @Published var isMischiefAnimating = false
     @Published var showYukionnaIntroCard = false
+    /// Clear で初めてゲットしたおともだちの紹介
+    @Published var showFriendGetCard = false
+    @Published var newlyBefriendedFriend: FriendID?
     @Published var popups: [ScorePopupData] = []
 
+    var missionTarget: Int { mission.ghostTarget }
+
     let size = 8
-    private let maxFrozenTiles = 10
     private var movesUntilMischief = Int.random(in: 3...5)
     private var isPlayerMovePending = false
     private var hasShownYukionnaIntro = false
+    /// 雪女ミッション中、または既におともだちなら凍結訪問あり
+    private var canReceiveFriendVisits = false
     private var boardSessionID = UUID()
+
+    /// 未ゲットの雪女ミッション＝吹雪級
+    private var isYukionnaBlizzardMission: Bool {
+        if case .visitor(.yukionna) = mission.kind { return true }
+        return false
+    }
+
+    private var mischiefMoveInterval: ClosedRange<Int> {
+        isYukionnaBlizzardMission ? 2...3 : 3...5
+    }
+
+    private var maxFrozenTiles: Int {
+        isYukionnaBlizzardMission ? 20 : 10
+    }
     
     init() {
         resetBoard()
     }
     
-    func resetBoard() {
+    func resetBoard(keepMission: Bool = false) {
         boardSessionID = UUID()
-        missionTarget = 26
-        movesUntilMischief = Int.random(in: 3...5)
+        if !keepMission {
+            mission = MissionCatalog.missionForCurrentProgress()
+        }
+        movesUntilMischief = Int.random(in: mischiefMoveInterval)
         isPlayerMovePending = false
         isMissionClearPending = false
         mischiefCoord = nil
         isMischiefAnimating = false
         showYukionnaIntroCard = false
+        showFriendGetCard = false
+        newlyBefriendedFriend = nil
         hasShownYukionnaIntro = false
-        tiles = (0..<size).map { row in
-            (0..<size).map { col in
-                var tile = Tile(color: GameColors.all.randomElement() ?? .blue)
-                if Double.random(in: 0..<1) < 0.10 {
-                    tile.isGhost = true
-                }
-                return tile
-            }
+        canReceiveFriendVisits = missionEnablesMischief(mission)
+        tiles = (0..<size).map { _ in
+            (0..<size).map { _ in makeRandomTile() }
         }
+    }
+
+    private func missionEnablesMischief(_ mission: Mission) -> Bool {
+        switch mission.kind {
+        case .visitor:
+            return true
+        case .normal:
+            return FriendRecords.isBefriended(.yukionna)
+        }
+    }
+
+    private func makeRandomTile() -> Tile {
+        var tile = Tile(color: GameColors.all.randomElement() ?? .blue)
+        if Double.random(in: 0..<1) < 0.10 {
+            tile.isGhost = true
+        }
+        return tile
     }
 
     func beginPlayerMove() {
@@ -79,12 +115,39 @@ class GameBoard: ObservableObject {
     }
 
     func showGameOver() {
-        guard !isGameOver else { return }
+        guard !isGameOver, !showFriendGetCard else { return }
+        let didClear = unlockedGhosts >= missionTarget
+        isGameOverPending = false
+        isMissionClearPending = false
+
+        // 初ゲットは Clear より先に見せる
+        if didClear, let friend = mission.rewardFriend, FriendRecords.befriend(friend) {
+            newlyBefriendedFriend = friend
+            withAnimation(.easeOut(duration: 0.2)) {
+                showFriendGetCard = true
+            }
+            SoundManager.shared.playEffect(named: "yuurei.mp3")
+            return
+        }
+
         DispatchQueue.main.async {
             withAnimation {
                 self.isGameOver = true
-                self.isGameOverPending = false
-                self.isMissionClearPending = false
+            }
+        }
+    }
+
+    /// ゲット演出のあと Clear / Over ポップへ
+    func finishFriendGetAndShowResult() {
+        guard showFriendGetCard else { return }
+        withAnimation(.easeOut(duration: 0.2)) {
+            showFriendGetCard = false
+        }
+        let sessionID = boardSessionID
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.22) {
+            guard self.boardSessionID == sessionID else { return }
+            withAnimation {
+                self.isGameOver = true
             }
         }
     }
@@ -248,6 +311,7 @@ class GameBoard: ObservableObject {
 
     private func startTileFall() {
         let cellHeight: CGFloat = BoardLayout.fallCellHeight
+
         for col in 0..<self.size {
             var newColumn: [Tile] = []
             var fallOffsets: [Int: Int] = [:]
@@ -261,8 +325,7 @@ class GameBoard: ObservableObject {
             }
             let missing = self.size - newColumn.count
             for i in 0..<missing {
-                var newTile = Tile(color: GameColors.all.randomElement() ?? .blue)
-                if Double.random(in: 0..<1) < 0.15 { newTile.isGhost = true }
+                var newTile = self.makeRandomTile()
                 newTile.fallOffset = -CGFloat(missing - i) * cellHeight
                 newTile.opacity = 0.0
                 newColumn.append(newTile)
@@ -294,10 +357,18 @@ class GameBoard: ObservableObject {
     }
 
     private func triggerMischiefIfPossible() {
+        // 雪女ミッション中、または既ゲット済みの訪問
+        guard canReceiveFriendVisits else {
+            movesUntilMischief = Int.random(in: mischiefMoveInterval)
+            return
+        }
+
+        let blizzard = isYukionnaBlizzardMission
         let frozenTileCount = tiles
             .flatMap { $0 }
             .filter(\.isFrozen)
             .count
+        let minNearbyNormals = blizzard ? 2 : 4
         let availableGhostCenters = (0..<size).flatMap { row in
             (0..<size).compactMap { col -> Coord? in
                 let tile = tiles[row][col]
@@ -305,25 +376,55 @@ class GameBoard: ObservableObject {
                 guard tile.isGhost,
                       !tile.isFrozen,
                       !tile.isMatched,
-                      nearbyNormalTiles(around: coord).count >= 4 else {
+                      nearbyNormalTiles(around: coord).count >= minNearbyNormals else {
                     return nil
                 }
                 return coord
             }
         }
 
-        guard maxFrozenTiles - frozenTileCount >= 5,
-              let center = availableGhostCenters.randomElement() else {
-            movesUntilMischief = 2
+        let minFreezeBudget = blizzard ? 6 : 5
+        guard maxFrozenTiles - frozenTileCount >= minFreezeBudget,
+              let firstCenter = availableGhostCenters.randomElement() else {
+            movesUntilMischief = blizzard ? 1 : 2
             return
         }
 
-        let nearbyTargets = nearbyNormalTiles(around: center)
-            .shuffled()
-            .prefix(4)
-        let targets = [center] + Array(nearbyTargets)
+        // 吹雪：別の魂を中心にもう1箇所（可能なら）
+        let secondCenter: Coord? = blizzard
+            ? availableGhostCenters
+                .filter { $0 != firstCenter }
+                .filter { abs($0.row - firstCenter.row) + abs($0.col - firstCenter.col) >= 3 }
+                .randomElement()
+                ?? availableGhostCenters.filter { $0 != firstCenter }.randomElement()
+            : nil
 
-        movesUntilMischief = Int.random(in: 3...5)
+        let centers = [firstCenter] + (secondCenter.map { [$0] } ?? [])
+
+        var targets: [Coord] = []
+        var used = Set<Coord>()
+        for center in centers {
+            let batch: [Coord]
+            if blizzard {
+                batch = blizzardFreezeTargets(around: center)
+            } else {
+                let nearbyTargets = nearbyNormalTiles(around: center)
+                    .shuffled()
+                    .prefix(4)
+                batch = [center] + Array(nearbyTargets)
+            }
+            for coord in batch where !used.contains(coord) {
+                used.insert(coord)
+                targets.append(coord)
+            }
+        }
+
+        guard !targets.isEmpty else {
+            movesUntilMischief = blizzard ? 1 : 2
+            return
+        }
+
+        movesUntilMischief = Int.random(in: mischiefMoveInterval)
         isMischiefAnimating = true
         let sessionID = boardSessionID
         let shouldShowIntro = !hasShownYukionnaIntro
@@ -332,6 +433,9 @@ class GameBoard: ObservableObject {
         }
 
         SoundManager.shared.playEffect(named: "yuurei.mp3")
+
+        // 表示用の出現位置（2箇所なら片方）
+        let displayCenter = firstCenter
 
         if shouldShowIntro {
             withAnimation(.easeOut(duration: 0.2)) {
@@ -359,7 +463,7 @@ class GameBoard: ObservableObject {
             }
         } else {
             withAnimation(.spring(response: 0.38, dampingFraction: 0.62)) {
-                mischiefCoord = center
+                mischiefCoord = displayCenter
             }
 
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.55) {
@@ -379,6 +483,25 @@ class GameBoard: ObservableObject {
             DispatchQueue.main.asyncAfter(deadline: .now() + 1.45) {
                 guard self.boardSessionID == sessionID else { return }
                 self.isMischiefAnimating = false
+            }
+        }
+    }
+
+    /// 吹雪用：中心を含む 3x3 の凍らせられるマス
+    private func blizzardFreezeTargets(around center: Coord) -> [Coord] {
+        let rowRange = max(0, center.row - 1)...min(size - 1, center.row + 1)
+        let colRange = max(0, center.col - 1)...min(size - 1, center.col + 1)
+
+        return rowRange.flatMap { row in
+            colRange.compactMap { col -> Coord? in
+                let coord = Coord(row: row, col: col)
+                let tile = tiles[row][col]
+                guard !tile.isFrozen,
+                      !tile.isMatched,
+                      tile.color != .clear else {
+                    return nil
+                }
+                return coord
             }
         }
     }

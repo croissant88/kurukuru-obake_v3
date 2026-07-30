@@ -212,7 +212,7 @@ struct TileView: View {
                 .zIndex(0)
             }
 
-            // 👻 ゴースト封印タイル（装飾なし・アイコンのみ）
+            // 👻 ゴースト
             if tile.isGhost {
                 Image("ghost_01")
                     .resizable()
