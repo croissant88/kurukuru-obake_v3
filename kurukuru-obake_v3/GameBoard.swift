@@ -156,7 +156,8 @@ class GameBoard: ObservableObject {
             }
         }
 
-        // 未所持がある限り Clear で1枚残る（確率調整は後で）
+        // 通常：だいたい3回に1回くらい
+        guard Double.random(in: 0..<1) < 0.34 else { return nil }
         guard let pick = MemoryFragmentRecords.uncollectedFragments().randomElement() else {
             return nil
         }

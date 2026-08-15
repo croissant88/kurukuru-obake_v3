@@ -13,6 +13,7 @@ private enum AppScreen {
 struct RootView: View {
     @State private var screen: AppScreen = .home
     @State private var playSessionID = UUID()
+    @State private var homeSessionID = UUID()
 
     var body: some View {
         ZStack {
@@ -22,9 +23,11 @@ struct RootView: View {
                     playSessionID = UUID()
                     screen = .play
                 }
+                .id(homeSessionID)
 
             case .play:
                 ContentView(onGoHome: {
+                    homeSessionID = UUID()
                     screen = .home
                 })
                 .id(playSessionID)

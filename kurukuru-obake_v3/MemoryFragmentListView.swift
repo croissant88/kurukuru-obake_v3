@@ -8,9 +8,7 @@ import SwiftUI
 struct MemoryFragmentListView: View {
     var onClose: () -> Void
 
-    private var collected: [MemoryFragment] {
-        MemoryFragmentRecords.collectedFragments()
-    }
+    @State private var collected: [MemoryFragment] = []
 
     var body: some View {
         ZStack {
@@ -24,7 +22,7 @@ struct MemoryFragmentListView: View {
                         .font(.system(size: 18, weight: .bold))
                         .foregroundStyle(.white)
                     Spacer()
-                    Text("\(MemoryFragmentRecords.collectedCount) / \(MemoryFragmentRecords.totalCount)")
+                    Text("\(collected.count) / \(MemoryFragmentRecords.totalCount)")
                         .font(.system(size: 14, weight: .semibold))
                         .foregroundStyle(.white.opacity(0.7))
                 }
@@ -83,6 +81,9 @@ struct MemoryFragmentListView: View {
                             .stroke(Color.white.opacity(0.2), lineWidth: 1)
                     )
             )
+        }
+        .onAppear {
+            collected = MemoryFragmentRecords.collectedFragments()
         }
     }
 }

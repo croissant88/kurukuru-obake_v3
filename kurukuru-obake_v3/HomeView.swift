@@ -10,10 +10,15 @@ struct HomeView: View {
 
     @AppStorage(PlayerRecords.totalGhostsKey) private var totalGhosts = 0
     @AppStorage(PlayerRecords.totalStarsKey) private var totalStars = 0
+    @AppStorage(MemoryFragmentRecords.revisionKey) private var fragmentRevision = 0
     @State private var showMemoryFragments = false
     @State private var showSoulItemEquip = false
-    @State private var collectedFragmentCount = MemoryFragmentRecords.collectedCount
     @State private var equippedItem: SoulItem? = SoulItemRecords.equipped
+
+    private var collectedFragmentCount: Int {
+        _ = fragmentRevision
+        return MemoryFragmentRecords.collectedCount
+    }
 
     private var playerLevel: Int {
         PlayerLevel.level(forTotalGhosts: totalGhosts)
@@ -141,7 +146,6 @@ struct HomeView: View {
 
             if showMemoryFragments {
                 MemoryFragmentListView {
-                    collectedFragmentCount = MemoryFragmentRecords.collectedCount
                     withAnimation(.easeOut(duration: 0.2)) {
                         showMemoryFragments = false
                     }
@@ -166,7 +170,6 @@ struct HomeView: View {
             }
         }
         .onAppear {
-            collectedFragmentCount = MemoryFragmentRecords.collectedCount
             equippedItem = SoulItemRecords.equipped
             SoundManager.shared.playBGM()
         }

@@ -51,6 +51,8 @@ enum MemoryFragmentCatalog {
 
 enum MemoryFragmentRecords {
     static let collectedKey = "collectedMemoryFragmentIDs"
+    /// Home など UI 更新用（collect のたびに増える）
+    static let revisionKey = "collectedMemoryFragmentRevision"
 
     /// UserDefaults に Array / 壊れた String のどちらでも読めるようにする
     private static func loadIDs() -> [String] {
@@ -74,7 +76,9 @@ enum MemoryFragmentRecords {
 
     private static func saveIDs(_ ids: [String]) {
         let unique = Array(Set(ids)).sorted()
-        UserDefaults.standard.set(unique, forKey: collectedKey)
+        let defaults = UserDefaults.standard
+        defaults.set(unique, forKey: collectedKey)
+        defaults.set(defaults.integer(forKey: revisionKey) + 1, forKey: revisionKey)
     }
 
     static var collectedIDs: Set<String> {
