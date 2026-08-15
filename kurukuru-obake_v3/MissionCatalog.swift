@@ -96,6 +96,56 @@ enum MissionCatalog {
             ghostTarget: 20,
             moveLimit: 23,
             rewardFriend: nil
+        ),
+        Mission(
+            id: "normal_rainy_vending",
+            kind: .normal,
+            headline: "今夜の頼まれごと",
+            shortTitle: "雨の自動販売機",
+            body: "雨音のなか、自販機の灯りだけが白い。そのまわりを、小さな気配がうろうろしている。",
+            ghostTarget: 23,
+            moveLimit: 23,
+            rewardFriend: nil
+        ),
+        Mission(
+            id: "normal_laundry_night",
+            kind: .normal,
+            headline: "今夜の頼まれごと",
+            shortTitle: "夜の物干し",
+            body: "取りこみ忘れた洗濯物が、風にゆれている。間を抜けて、迷い子が隠れている気配がする。",
+            ghostTarget: 21,
+            moveLimit: 23,
+            rewardFriend: nil
+        ),
+        Mission(
+            id: "normal_convenience_back",
+            kind: .normal,
+            headline: "今夜の頼まれごと",
+            shortTitle: "コンビニの裏",
+            body: "明かりの届かない裏側に、冷たい気配がたまっている。朝の配達が来る前に、還してあげて。",
+            ghostTarget: 25,
+            moveLimit: 23,
+            rewardFriend: nil
+        ),
+        Mission(
+            id: "normal_bridge_fog",
+            kind: .normal,
+            headline: "今夜の頼まれごと",
+            shortTitle: "川霧の橋",
+            body: "橋の真ん中だけ、霧が厚い。向こう岸へ行けずにいる魂がいるから、手を貸してほしい。",
+            ghostTarget: 27,
+            moveLimit: 23,
+            rewardFriend: nil
+        ),
+        Mission(
+            id: "normal_closed_festival",
+            kind: .normal,
+            headline: "今夜の頼まれごと",
+            shortTitle: "終わった縁日",
+            body: "提灯は消えて、屋台の跡だけが残っている。祭りの残り香に、還りきれない魂がいる。",
+            ghostTarget: 24,
+            moveLimit: 23,
+            rewardFriend: nil
         )
     ]
 

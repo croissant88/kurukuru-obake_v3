@@ -43,6 +43,8 @@ class GameBoard: ObservableObject {
     /// Clear で初めて出会った相手の紹介
     @Published var showFriendGetCard = false
     @Published var newlyBefriendedFriend: FriendID?
+    /// Clear 時に新しく残った記憶のカケラ
+    @Published var newlyFoundFragment: MemoryFragment?
     @Published var popups: [ScorePopupData] = []
 
     var missionTarget: Int { mission.ghostTarget }
@@ -86,6 +88,7 @@ class GameBoard: ObservableObject {
         showYukionnaIntroCard = false
         showFriendGetCard = false
         newlyBefriendedFriend = nil
+        newlyFoundFragment = nil
         hasShownYukionnaIntro = false
         canReceiveFriendVisits = missionEnablesMischief(mission)
         tiles = (0..<size).map { _ in
@@ -119,6 +122,11 @@ class GameBoard: ObservableObject {
         let didClear = unlockedGhosts >= missionTarget
         isGameOverPending = false
         isMissionClearPending = false
+        newlyFoundFragment = nil
+
+        if didClear {
+            newlyFoundFragment = rollMemoryFragmentReward()
+        }
 
         // Clear 時：お友だちカード → 結果ポップ（スパークルはポップ表示中）
         if didClear, let friend = mission.rewardFriend, FriendRecords.befriend(friend) {
@@ -135,6 +143,25 @@ class GameBoard: ObservableObject {
                 self.isGameOver = true
             }
         }
+    }
+
+    /// Clear 報酬：記憶のカケラ（未所持から）
+    private func rollMemoryFragmentReward() -> MemoryFragment? {
+        // 雪女の夜はバス停のカケラを優先
+        if case .visitor(.yukionna) = mission.kind {
+            let id = MemoryFragmentCatalog.yukionnaClearFragmentID
+            if MemoryFragmentRecords.collect(id),
+               let fragment = MemoryFragmentCatalog.fragment(id: id) {
+                return fragment
+            }
+        }
+
+        // 未所持がある限り Clear で1枚残る（確率調整は後で）
+        guard let pick = MemoryFragmentRecords.uncollectedFragments().randomElement() else {
+            return nil
+        }
+        guard MemoryFragmentRecords.collect(pick.id) else { return nil }
+        return pick
     }
 
     /// お友だち演出のあと Clear ポップへ

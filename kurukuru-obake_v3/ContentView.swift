@@ -125,7 +125,7 @@ struct ContentView: View {
 
                 HStack(alignment: .firstTextBaseline) {
                     HStack(alignment: .firstTextBaseline, spacing: 6) {
-                        Text("Score")
+                        Text("スコア")
                             .font(.system(size: 13, weight: .semibold))
                             .foregroundColor(.white.opacity(0.85))
                         Text("\(board.score)")
@@ -134,7 +134,7 @@ struct ContentView: View {
                     }
                     Spacer(minLength: 12)
                     HStack(alignment: .firstTextBaseline, spacing: 6) {
-                        Text("Best Score")
+                        Text("ベスト")
                             .font(.system(size: 13, weight: .semibold))
                             .foregroundColor(.white.opacity(0.85))
                         Text("\(bestScore)")
@@ -145,11 +145,11 @@ struct ContentView: View {
                 .frame(width: boardDisplayWidth)
 
                 HStack {
-                    Text("Stars: \(board.collectedStars)")
+                    Text("星屑 \(board.collectedStars)")
                         .font(.headline)
                         .foregroundColor(.white)
                     Spacer(minLength: 16)
-                    Text("Ghosts: \(board.unlockedGhosts) / \(board.missionTarget)")
+                    Text("解放した魂 \(board.unlockedGhosts) / \(board.missionTarget)")
                         .font(.headline)
                         .foregroundColor(.white)
                 }
@@ -179,11 +179,11 @@ struct ContentView: View {
                     )
 
                 HStack {
-                    Text("Time \(timeString)")
+                    Text("時間 \(timeString)")
                         .font(.subheadline.weight(.semibold))
                         .foregroundColor(.white.opacity(0.95))
                     Spacer()
-                    Text("Moves \(moveCount)")
+                    Text("手数 \(moveCount)")
                         .font(.subheadline.weight(.semibold))
                         .foregroundColor(.white.opacity(0.95))
                 }
@@ -245,6 +245,7 @@ struct ContentView: View {
                     isClear: board.unlockedGhosts >= board.missionTarget,
                     imageName: endPopupImageName,
                     clearActionTitle: "次へ",
+                    memoryFragmentTitle: board.newlyFoundFragment?.title,
                     onNewGame: {
                         let didClear = board.unlockedGhosts >= board.missionTarget
                         resetGame(keepMission: !didClear)

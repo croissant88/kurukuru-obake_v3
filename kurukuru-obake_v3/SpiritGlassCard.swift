@@ -12,6 +12,8 @@ struct SpiritGlassCard: View {
     var message: String
     /// タイトル上の小見出し（任意）
     var subtitle: String? = nil
+    /// 画像右上の仮アクセサリ（SF Symbol）
+    var accessorySymbol: String? = nil
     var imageSize: CGFloat = 120
     var cardWidth: CGFloat = 196
     /// Homeなど：指でポケモンカード風に傾けられる
@@ -50,10 +52,20 @@ struct SpiritGlassCard: View {
 
     private func cardBody(size: CGSize) -> some View {
         VStack(spacing: 14) {
-            Image(imageName)
-                .resizable()
-                .scaledToFit()
-                .frame(width: imageSize, height: imageSize)
+            ZStack(alignment: .topTrailing) {
+                Image(imageName)
+                    .resizable()
+                    .scaledToFit()
+                    .frame(width: imageSize, height: imageSize)
+
+                if let accessorySymbol {
+                    Image(systemName: accessorySymbol)
+                        .font(.system(size: imageSize * 0.28, weight: .semibold))
+                        .foregroundStyle(.white)
+                        .shadow(color: .black.opacity(0.35), radius: 2, y: 1)
+                        .offset(x: 6, y: -4)
+                }
+            }
 
             VStack(spacing: 6) {
                 if let subtitle, !subtitle.isEmpty {

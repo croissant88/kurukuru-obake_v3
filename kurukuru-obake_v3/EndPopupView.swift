@@ -6,7 +6,8 @@ struct EndPopupView: View {
     var missionTarget: Int
     var isClear: Bool
     var imageName: String
-    var clearActionTitle: String = "Next Stage"
+    var clearActionTitle: String = "次へ"
+    var memoryFragmentTitle: String? = nil
 
     var onNewGame: () -> Void
     var onClose: () -> Void          // Home
@@ -29,7 +30,7 @@ struct EndPopupView: View {
 
                 VStack(spacing: 18) {
 
-                    Text(isClear ? "Mission Clear" : "Game Over")
+                    Text(isClear ? "クリア" : "ゲームオーバー")
                         .font(.system(size: 28, weight: .heavy))
                         .foregroundColor(
                             isClear
@@ -45,8 +46,15 @@ struct EndPopupView: View {
                         .frame(height: 120)
 
                     VStack(alignment: .leading, spacing: 12) {
-                        popupRow(icon: "star.fill", title: "Stars", value: "\(starCount)")
-                        popupRow(icon: "sparkles", title: "Ghosts", value: "\(ghosts) / \(missionTarget)")
+                        popupRow(icon: "star.fill", title: "星屑", value: "\(starCount)")
+                        popupRow(icon: "sparkles", title: "解放した魂", value: "\(ghosts) / \(missionTarget)")
+                        if let memoryFragmentTitle {
+                            popupRow(
+                                icon: "moon.stars.fill",
+                                title: "記憶のカケラ",
+                                value: memoryFragmentTitle
+                            )
+                        }
                     }
                     .padding(.horizontal, 30)
 
