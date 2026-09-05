@@ -39,7 +39,7 @@ struct SoulItemEquipView: View {
                         ForEach(unlocked) { item in
                             equipRow(
                                 title: item.name,
-                                symbol: item.symbolName,
+                                imageName: item.imageName,
                                 isSelected: SoulItemRecords.equippedID == item.id
                             ) {
                                 SoulItemRecords.equippedID = item.id
@@ -80,16 +80,16 @@ struct SoulItemEquipView: View {
 
     private func equipRow(
         title: String,
-        symbol: String,
+        imageName: String,
         isSelected: Bool,
         action: @escaping () -> Void
     ) -> some View {
         Button(action: action) {
             HStack(spacing: 12) {
-                Image(systemName: symbol)
-                    .font(.system(size: 16, weight: .semibold))
-                    .foregroundStyle(Color(hex: "598cd2"))
-                    .frame(width: 28, height: 22)
+                Image(imageName)
+                    .resizable()
+                    .scaledToFit()
+                    .frame(width: 28, height: 28)
 
                 Text(title)
                     .font(.system(size: 15, weight: .semibold))

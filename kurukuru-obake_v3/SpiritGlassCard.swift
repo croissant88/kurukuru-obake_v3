@@ -12,8 +12,8 @@ struct SpiritGlassCard: View {
     var message: String
     /// タイトル上の小見出し（任意）
     var subtitle: String? = nil
-    /// 画像右上の仮アクセサリ（SF Symbol）
-    var accessorySymbol: String? = nil
+    /// 無名の魂に渡したアイテム（画像＋配置）
+    var accessoryItem: SoulItem? = nil
     var imageSize: CGFloat = 120
     var cardWidth: CGFloat = 196
     /// Homeなど：指でポケモンカード風に傾けられる
@@ -50,22 +50,38 @@ struct SpiritGlassCard: View {
         imageSize + 140 + (subtitle == nil ? 0 : 22)
     }
 
+    private var portraitWidth: CGFloat {
+        guard let item = accessoryItem, item.placement.ghostShiftX > 0 else {
+            return imageSize
+        }
+        // 左隣アクセサリ用に、魂を右へずらしたぶん幅を足す
+        return imageSize * (1 + item.placement.ghostShiftX * 1.15)
+    }
+
     private func cardBody(size: CGSize) -> some View {
         VStack(spacing: 14) {
-            ZStack(alignment: .topTrailing) {
+            ZStack {
                 Image(imageName)
                     .resizable()
                     .scaledToFit()
                     .frame(width: imageSize, height: imageSize)
+                    .offset(x: (accessoryItem?.placement.ghostShiftX ?? 0) * imageSize)
 
-                if let accessorySymbol {
-                    Image(systemName: accessorySymbol)
-                        .font(.system(size: imageSize * 0.28, weight: .semibold))
-                        .foregroundStyle(.white)
-                        .shadow(color: .black.opacity(0.35), radius: 2, y: 1)
-                        .offset(x: 6, y: -4)
+                if let item = accessoryItem {
+                    let placement = item.placement
+                    let accessorySize = imageSize * placement.sizeRatio
+                    Image(item.imageName)
+                        .resizable()
+                        .scaledToFit()
+                        .frame(width: accessorySize, height: accessorySize)
+                        .shadow(color: .black.opacity(0.22), radius: 2, y: 1)
+                        .offset(
+                            x: (placement.ghostShiftX + placement.offsetX) * imageSize,
+                            y: placement.offsetY * imageSize
+                        )
                 }
             }
+            .frame(width: portraitWidth, height: imageSize)
 
             VStack(spacing: 6) {
                 if let subtitle, !subtitle.isEmpty {

@@ -92,7 +92,7 @@ struct HomeView: View {
                         title: "無名の魂",
                         message: soulCardMessage,
                         subtitle: soulCardSubtitle,
-                        accessorySymbol: equippedItem?.symbolName,
+                        accessoryItem: equippedItem,
                         imageSize: 96,
                         cardWidth: 180,
                         allowsTilt: true
