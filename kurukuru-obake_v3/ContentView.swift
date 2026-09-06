@@ -18,7 +18,6 @@ struct ContentView: View {
     @State private var playLockedAfterEnd = false
     @State private var showMissionBriefing = true
     @State private var showSettingsMenu = false
-    @State private var showHomeConfirm = false
     private let playTimer = Timer.publish(every: 0.2, on: .main, in: .common).autoconnect()
     private let impactFeedback = UIImpactFeedbackGenerator(style: .light)
 
@@ -48,7 +47,6 @@ struct ContentView: View {
             && !board.showFriendGetCard
             && !playLockedAfterEnd
             && !showSettingsMenu
-            && !showHomeConfirm
     }
 
     private var boardPixelSide: CGFloat {
@@ -207,12 +205,16 @@ struct ContentView: View {
                         Text(board.mission.shortTitle)
                             .font(.system(size: 22, weight: .bold))
                             .foregroundColor(.white)
+                        Rectangle()
+                            .fill(Color.gray.opacity(0.55))
+                            .frame(height: 1)
+                            // .padding(.top, 2)
                         Text(board.mission.body)
                             .font(.system(size: 15, weight: .medium))
                             .foregroundColor(.white.opacity(0.92))
                             .multilineTextAlignment(.center)
                             .lineSpacing(4)
-                            .padding(.top, 4)
+                            .padding(.top, 2)
                         Text("魂 \(board.missionTarget) 体　／　\(moveLimit) 手")
                             .font(.system(size: 13, weight: .semibold))
                             .foregroundColor(.white.opacity(0.7))
@@ -290,7 +292,8 @@ struct ContentView: View {
                 PlaySettingsMenuView(
                     mission: board.mission,
                     onHome: {
-                        showHomeConfirm = true
+                        showSettingsMenu = false
+                        onGoHome()
                     },
                     onClose: {
                         withAnimation(.easeOut(duration: 0.2)) {
@@ -301,15 +304,6 @@ struct ContentView: View {
                 .zIndex(50)
                 .transition(.opacity)
             }
-        }
-        .alert("ホームに戻りますか？", isPresented: $showHomeConfirm) {
-            Button("キャンセル", role: .cancel) {}
-            Button("ホームへ", role: .destructive) {
-                showSettingsMenu = false
-                onGoHome()
-            }
-        } message: {
-            Text("現在のプレイは終了します。")
         }
         .onChange(of: board.score) { _, newScore in
             let currentBest = UserDefaults.standard.integer(forKey: bestScoreKey)
@@ -371,7 +365,6 @@ struct ContentView: View {
             selected.removeAll()
             dragColor = nil
             showSettingsMenu = false
-            showHomeConfirm = false
         }
         presentMissionBriefing()
     }

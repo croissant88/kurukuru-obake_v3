@@ -73,10 +73,10 @@ enum SoulItemCatalog {
         SoulItem(
             id: "paper_plane",
             name: "紙飛行機",
-            unlockFragmentID: "contrail",
+            unlockFragmentID: "paper_plane",
             imageName: "item_paper_plane",
             placement: .paperPlane,
-            equippedMessage: "白い線の先を、まだ見てる"
+            equippedMessage: "カーテンの向こうから、また飛んでくる気がする"
         )
     ]
 

@@ -20,6 +20,11 @@ enum MemoryFragmentCatalog {
             body: "空の白い線を指さして、消えちゃう前に追っかけた。息が切れて、笑った。"
         ),
         MemoryFragment(
+            id: "paper_plane",
+            title: "飛んできた紙飛行機",
+            body: "その家の前を通ると、いつも紙飛行機が飛んできた。振り返ると、もう誰もいなくて、カーテンだけが揺れていた。"
+        ),
+        MemoryFragment(
             id: "straw_hat",
             title: "麦わら帽子が風にさらわれた日",
             body: "風が強くて、帽子だけ先に行ってしまった。追いかけたあと、空がやけに青かった。"

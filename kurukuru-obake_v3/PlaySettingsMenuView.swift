@@ -18,9 +18,9 @@ struct PlaySettingsMenuView: View {
                 .onTapGesture(perform: onClose)
 
             VStack(spacing: 20) {
-                HStack(spacing: 28) {
+                HStack(spacing: 20) {
                     toggleColumn(title: "BGM", isOn: $sound.isBGMEnabled)
-                    toggleColumn(title: "SE", isOn: $sound.isSEEnabled)
+                    toggleColumn(title: "効果音", isOn: $sound.isSEEnabled)
                 }
 
                 VStack(spacing: 8) {
@@ -31,18 +31,22 @@ struct PlaySettingsMenuView: View {
                         .font(.system(size: 16, weight: .bold))
                         .foregroundStyle(.primary.opacity(0.92))
                         .multilineTextAlignment(.center)
+                    Rectangle()
+                        .fill(Color.primary.opacity(0.45))
+                        .frame(height: 1)
                     Text(mission.body)
                         .font(.system(size: 13, weight: .medium))
                         .foregroundStyle(.primary.opacity(0.78))
                         .multilineTextAlignment(.center)
                         .lineSpacing(3)
+                        .padding(.top, 2)
                     Text("魂 \(mission.ghostTarget) 体　／　\(mission.moveLimit) 手")
                         .font(.system(size: 12, weight: .semibold))
                         .foregroundStyle(.primary.opacity(0.5))
                         .padding(.top, 2)
                 }
-                .padding(.horizontal, 4)
-                .padding(.vertical, 12)
+                .padding(.horizontal, 16)
+                .padding(.vertical, 20)
                 .frame(maxWidth: .infinity)
                 .background(
                     RoundedRectangle(cornerRadius: 12, style: .continuous)
@@ -57,20 +61,7 @@ struct PlaySettingsMenuView: View {
                         .padding(.vertical, 14)
                         .background(
                             RoundedRectangle(cornerRadius: 12, style: .continuous)
-                                .fill(
-                                    LinearGradient(
-                                        colors: [
-                                            Color(hex: "6b7fd7"),
-                                            Color(hex: "8b6bb8")
-                                        ],
-                                        startPoint: .top,
-                                        endPoint: .bottom
-                                    )
-                                )
-                        )
-                        .overlay(
-                            RoundedRectangle(cornerRadius: 12, style: .continuous)
-                                .stroke(Color(hex: "a8addc"), lineWidth: 1)
+                                .fill(Color(hex: "4a5fb8"))
                         )
                 }
                 .buttonStyle(.plain)
@@ -90,13 +81,15 @@ struct PlaySettingsMenuView: View {
     }
 
     private func toggleColumn(title: String, isOn: Binding<Bool>) -> some View {
-        VStack(spacing: 10) {
+        HStack(spacing: 8) {
             Text(title)
-                .font(.system(size: 15, weight: .semibold))
-                .foregroundStyle(.primary.opacity(0.9))
+                .font(.system(size: 14, weight: .semibold))
+                .foregroundStyle(Color(hex: "1d3a5c").opacity(0.85))
+                .lineLimit(1)
+                .fixedSize(horizontal: true, vertical: false)
             Toggle("", isOn: isOn)
                 .labelsHidden()
-                .tint(Color(hex: "4bc995"))
+                .tint(Color(hex: "4a5fb8"))
         }
         .frame(maxWidth: .infinity)
     }

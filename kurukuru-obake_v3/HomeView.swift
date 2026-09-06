@@ -124,20 +124,7 @@ struct HomeView: View {
                         .padding(.vertical, 16)
                         .background(
                             RoundedRectangle(cornerRadius: 14, style: .continuous)
-                                .fill(
-                                    LinearGradient(
-                                        colors: [
-                                            Color(hex: "6b7fd7"),
-                                            Color(hex: "8b6bb8")
-                                        ],
-                                        startPoint: .top,
-                                        endPoint: .bottom
-                                    )
-                                )
-                        )
-                        .overlay(
-                            RoundedRectangle(cornerRadius: 14, style: .continuous)
-                                .stroke(Color(hex: "a8addc"), lineWidth: 1)
+                                .fill(Color(hex: "4a5fb8"))
                         )
                 }
                 .buttonStyle(.plain)
