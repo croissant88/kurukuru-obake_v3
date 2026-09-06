@@ -2,8 +2,6 @@ import SwiftUI
 import Combine
 
 struct ContentView: View {
-    private let bestScoreKey = "bestScore"
-
     var onGoHome: () -> Void = {}
 
     @StateObject private var board = GameBoard()
@@ -28,10 +26,6 @@ struct ContentView: View {
     private var timeString: String {
         let s = displayElapsedSeconds
         return String(format: "%02d:%02d", s / 60, s % 60)
-    }
-
-    private var bestScore: Int {
-        UserDefaults.standard.integer(forKey: bestScoreKey)
     }
 
     private var showEndPopup: Bool {
@@ -120,27 +114,6 @@ struct ContentView: View {
                     .foregroundColor(.white)
                     .frame(width: boardDisplayWidth, alignment: .center)
                     .padding(.bottom, 12)
-
-                HStack(alignment: .firstTextBaseline) {
-                    HStack(alignment: .firstTextBaseline, spacing: 6) {
-                        Text("スコア")
-                            .font(.system(size: 13, weight: .semibold))
-                            .foregroundColor(.white.opacity(0.85))
-                        Text("\(board.score)")
-                            .font(.system(size: 20, weight: .bold))
-                            .foregroundColor(.white)
-                    }
-                    Spacer(minLength: 12)
-                    HStack(alignment: .firstTextBaseline, spacing: 6) {
-                        Text("ベスト")
-                            .font(.system(size: 13, weight: .semibold))
-                            .foregroundColor(.white.opacity(0.85))
-                        Text("\(bestScore)")
-                            .font(.system(size: 20, weight: .bold))
-                            .foregroundColor(.white.opacity(0.92))
-                    }
-                }
-                .frame(width: boardDisplayWidth)
 
                 HStack {
                     Text("星屑 \(board.collectedStars)")
@@ -303,12 +276,6 @@ struct ContentView: View {
                 )
                 .zIndex(50)
                 .transition(.opacity)
-            }
-        }
-        .onChange(of: board.score) { _, newScore in
-            let currentBest = UserDefaults.standard.integer(forKey: bestScoreKey)
-            if newScore > currentBest {
-                UserDefaults.standard.set(newScore, forKey: bestScoreKey)
             }
         }
         .onAppear {
