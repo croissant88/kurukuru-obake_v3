@@ -43,6 +43,46 @@ enum MemoryFragmentCatalog {
             id: "old_school",
             title: "旧校舎の午後",
             body: "使われなくなった廊下に、靴音が残っている気がした。角を曲がると、風だけが通った。"
+        ),
+        MemoryFragment(
+            id: "festival_goldfish",
+            title: "縁日の金魚すくい",
+            body: "すくうたびに紙が破れて、金魚だけが光って見えた。袋のなかは、もう空だった。"
+        ),
+        MemoryFragment(
+            id: "rainy_vending",
+            title: "雨の自販機のまえ",
+            body: "コインを入れて、押したボタンは光らないまま。足元に、ぬれたレシートだけが残っていた。"
+        ),
+        MemoryFragment(
+            id: "laundry_rope",
+            title: "夜の物干しロープ",
+            body: "取りこみ忘れたタオルが、風にぱたぱたしていた。誰かの体温みたいなにおいがした。"
+        ),
+        MemoryFragment(
+            id: "last_train_gate",
+            title: "終電あとの改札",
+            body: "改札の向こうで、足音がひとつだけ響いた。切符入れに、折れた半券が残っていた。"
+        ),
+        MemoryFragment(
+            id: "rooftop_fence",
+            title: "屋上のフェンス",
+            body: "空が近すぎて、指をかけたまましばらく動けなかった。錆のにおいと、風だけが強かった。"
+        ),
+        MemoryFragment(
+            id: "convenience_outside",
+            title: "コンビニの明かりの外",
+            body: "中は白いのに、一歩外へ出ると夜が濃い。レジのレシートが、靴の裏についていた。"
+        ),
+        MemoryFragment(
+            id: "bridge_rail",
+            title: "川霧の橋のてすり",
+            body: "てすりがぬれて冷たくて、向こう岸が見えなかった。手を離すと、霧だけが残った。"
+        ),
+        MemoryFragment(
+            id: "bug_cage",
+            title: "夏休みの虫かご",
+            body: "蓋を開けたら、もう何もいなかった。底に、草のくずだけが乾いていた。"
         )
     ]
 

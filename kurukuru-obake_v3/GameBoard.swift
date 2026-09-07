@@ -145,24 +145,18 @@ class GameBoard: ObservableObject {
         }
     }
 
-    /// Clear 報酬：記憶のカケラ（未所持から）
+    /// Clear 報酬：その夜に紐づく記憶のカケラのみ
     private func rollMemoryFragmentReward() -> MemoryFragment? {
-        // 雪女の夜はバス停のカケラを優先
-        if case .visitor(.yukionna) = mission.kind {
-            let id = MemoryFragmentCatalog.yukionnaClearFragmentID
-            if MemoryFragmentRecords.collect(id),
-               let fragment = MemoryFragmentCatalog.fragment(id: id) {
-                return fragment
-            }
-        }
+        guard let linkedID = mission.rewardFragmentID else { return nil }
 
-        // 通常：だいたい3回に1回くらい
-        guard Double.random(in: 0..<1) < 0.34 else { return nil }
-        guard let pick = MemoryFragmentRecords.uncollectedFragments().randomElement() else {
+        // TODO: テスト用に高め — 本番前に 0.34 へ戻す
+        guard Double.random(in: 0..<1) < 0.92 else { return nil }
+        guard !MemoryFragmentRecords.isCollected(linkedID),
+              MemoryFragmentRecords.collect(linkedID),
+              let fragment = MemoryFragmentCatalog.fragment(id: linkedID) else {
             return nil
         }
-        guard MemoryFragmentRecords.collect(pick.id) else { return nil }
-        return pick
+        return fragment
     }
 
     /// お友だち演出のあと Clear ポップへ

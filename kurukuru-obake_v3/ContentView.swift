@@ -70,6 +70,7 @@ struct ContentView: View {
                     Spacer()
                     if !showEndPopup {
                         Button {
+                            SoundManager.shared.playEffect(named: "popi.mp3")
                             withAnimation(.easeOut(duration: 0.2)) {
                                 showSettingsMenu = true
                             }
@@ -288,8 +289,10 @@ struct ContentView: View {
             let didClear = board.unlockedGhosts >= board.missionTarget
             if didClear {
                 endPopupImageName = ["clear_01", "clear_02", "clear_03"].randomElement() ?? "clear_01"
+                SoundManager.shared.playEffect(named: "hanabi.mp3")
             } else {
                 endPopupImageName = ["over_01", "over_02", "over_03"].randomElement() ?? "over_01"
+                SoundManager.shared.playEffect(named: "gameover.mp3")
             }
         }
         .onReceive(playTimer) { _ in

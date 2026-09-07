@@ -101,7 +101,7 @@ struct HomeView: View {
                     Button {
                         showSoulItemEquip = true
                     } label: {
-                        Text(equippedItem == nil ? "なにか渡す" : "渡しなおす")
+                        Text("思い出のアイテム")
                             .font(.system(size: 13, weight: .semibold))
                             .foregroundStyle(.white.opacity(0.8))
                             .padding(.horizontal, 14)
@@ -115,7 +115,10 @@ struct HomeView: View {
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
 
-                Button(action: onStart) {
+                Button(action: {
+                    SoundManager.shared.playEffect(named: "popi.mp3")
+                    onStart()
+                }) {
                     Text("スタート")
                         .font(.system(size: 24, weight: .bold))
                         .tracking(2)

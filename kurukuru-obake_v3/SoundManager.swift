@@ -176,7 +176,7 @@ final class SoundManager: NSObject, AVAudioPlayerDelegate, ObservableObject {
     // 🔊 効果音再生（同時再生可）
     func playEffect(named name: String, volume: Float = 1.0) {
         guard isSEEnabled else { return }
-        guard let url = Bundle.main.url(forResource: name, withExtension: nil) else {
+        guard let url = Self.bundleURL(forFileName: name) else {
             print("効果音見つからない: \(name)")
             return
         }

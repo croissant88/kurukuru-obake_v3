@@ -53,7 +53,10 @@ struct PlaySettingsMenuView: View {
                         .fill(Color.primary.opacity(0.06))
                 )
 
-                Button(action: onHome) {
+                Button(action: {
+                    SoundManager.shared.playEffect(named: "popi.mp3")
+                    onHome()
+                }) {
                     Text("ホーム")
                         .font(.system(size: 18, weight: .bold))
                         .foregroundStyle(.white)

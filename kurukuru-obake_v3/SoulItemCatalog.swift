@@ -36,6 +36,54 @@ struct SoulItemPlacement: Equatable {
         offsetY: -0.46,
         ghostShiftX: 0
     )
+
+    /// 飛行機＋雲：左上（上に余白）
+    static let contrail = SoulItemPlacement(
+        sizeRatio: 0.58,
+        offsetX: -0.62,
+        offsetY: -0.36,
+        ghostShiftX: 0.18
+    )
+
+    /// 旧校舎の風：右上（帽子・紙飛行機系）
+    static let oldSchool = SoulItemPlacement(
+        sizeRatio: 0.38,
+        offsetX: 0.50,
+        offsetY: -0.44,
+        ghostShiftX: 0
+    )
+
+    /// 砂場：おばけの左下
+    static let parkSlide = SoulItemPlacement(
+        sizeRatio: 0.52,
+        offsetX: -0.42,
+        offsetY: 0.42,
+        ghostShiftX: 0.08
+    )
+
+    /// 金魚：右手もと
+    static let goldfish = SoulItemPlacement(
+        sizeRatio: 0.42,
+        offsetX: 0.40,
+        offsetY: 0.12,
+        ghostShiftX: 0
+    )
+
+    /// とんぼ：左まわり（虫かごカケラ用）
+    static let bugCage = SoulItemPlacement(
+        sizeRatio: 0.55,
+        offsetX: -0.45,
+        offsetY: -0.08,
+        ghostShiftX: 0.10
+    )
+
+    /// フェンスの欠片：右上（帽子系）
+    static let rooftopFence = SoulItemPlacement(
+        sizeRatio: 0.36,
+        offsetX: 0.42,
+        offsetY: -0.40,
+        ghostShiftX: 0
+    )
 }
 
 struct SoulItem: Identifiable, Equatable {
@@ -77,6 +125,54 @@ enum SoulItemCatalog {
             imageName: "item_paper_plane",
             placement: .paperPlane,
             equippedMessage: "カーテンの向こうから、また飛んでくる気がする"
+        ),
+        SoulItem(
+            id: "contrail",
+            name: "飛行機雲",
+            unlockFragmentID: "contrail",
+            imageName: "item_contrail",
+            placement: .contrail,
+            equippedMessage: "白い線の先を、まだ見てる"
+        ),
+        SoulItem(
+            id: "old_school",
+            name: "校舎の風",
+            unlockFragmentID: "old_school",
+            imageName: "item_old_school",
+            placement: .oldSchool,
+            equippedMessage: "廊下の角で、風だけが通っていく"
+        ),
+        SoulItem(
+            id: "park_slide",
+            name: "砂場のおもちゃ",
+            unlockFragmentID: "park_slide",
+            imageName: "item_park_slide",
+            placement: .parkSlide,
+            equippedMessage: "座面のあたたかさが、まだ残ってる"
+        ),
+        SoulItem(
+            id: "goldfish",
+            name: "縁日の金魚",
+            unlockFragmentID: "festival_goldfish",
+            imageName: "item_goldfish",
+            placement: .goldfish,
+            equippedMessage: "光って見えたのに、もういない"
+        ),
+        SoulItem(
+            id: "bug_cage",
+            name: "夏のとんぼ",
+            unlockFragmentID: "bug_cage",
+            imageName: "item_bug_cage",
+            placement: .bugCage,
+            equippedMessage: "蓋を開けたら、もう何もいなかった"
+        ),
+        SoulItem(
+            id: "rooftop_fence",
+            name: "屋上のフェンス",
+            unlockFragmentID: "rooftop_fence",
+            imageName: "item_rooftop_fence",
+            placement: .rooftopFence,
+            equippedMessage: "指先に、錆と風が残ってる"
         )
     ]
 

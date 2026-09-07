@@ -74,7 +74,6 @@ struct SpiritGlassCard: View {
                         .resizable()
                         .scaledToFit()
                         .frame(width: accessorySize, height: accessorySize)
-                        .shadow(color: .black.opacity(0.22), radius: 2, y: 1)
                         .offset(
                             x: (placement.ghostShiftX + placement.offsetX) * imageSize,
                             y: placement.offsetY * imageSize
