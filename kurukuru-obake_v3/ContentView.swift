@@ -224,12 +224,15 @@ struct ContentView: View {
                     memoryFragmentTitle: board.newlyFoundFragment?.title,
                     onNewGame: {
                         let didClear = board.unlockedGhosts >= board.missionTarget
+                        SoundManager.shared.stopAllEffects()
                         resetGame(keepMission: !didClear)
                     },
                     onClose: {
+                        SoundManager.shared.stopAllEffects()
                         onGoHome()
                     },
                     onClosePopup: {
+                        SoundManager.shared.stopAllEffects()
                         endPopupDismissed = true
                         playLockedAfterEnd = true
                     }
@@ -289,7 +292,7 @@ struct ContentView: View {
             let didClear = board.unlockedGhosts >= board.missionTarget
             if didClear {
                 endPopupImageName = ["clear_01", "clear_02", "clear_03"].randomElement() ?? "clear_01"
-                SoundManager.shared.playEffect(named: "hanabi.mp3")
+                SoundManager.shared.playEffect(named: "hanabi.mp3", maxDuration: 3.0)
             } else {
                 endPopupImageName = ["over_01", "over_02", "over_03"].randomElement() ?? "over_01"
                 SoundManager.shared.playEffect(named: "gameover.mp3")

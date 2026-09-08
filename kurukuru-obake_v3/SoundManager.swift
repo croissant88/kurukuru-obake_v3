@@ -174,7 +174,8 @@ final class SoundManager: NSObject, AVAudioPlayerDelegate, ObservableObject {
     }
 
     // 🔊 効果音再生（同時再生可）
-    func playEffect(named name: String, volume: Float = 1.0) {
+    /// `maxDuration` を渡すとその秒数で強制停止（長い SE の切り詰め用）
+    func playEffect(named name: String, volume: Float = 1.0, maxDuration: TimeInterval? = nil) {
         guard isSEEnabled else { return }
         guard let url = Self.bundleURL(forFileName: name) else {
             print("効果音見つからない: \(name)")
@@ -187,8 +188,23 @@ final class SoundManager: NSObject, AVAudioPlayerDelegate, ObservableObject {
             player.prepareToPlay()
             effectPlayers.append(player)
             player.play()
+            if let maxDuration, maxDuration > 0 {
+                DispatchQueue.main.asyncAfter(deadline: .now() + maxDuration) { [weak self, weak player] in
+                    guard let self, let player, player.isPlaying else { return }
+                    player.stop()
+                    self.effectPlayers.removeAll { $0 === player }
+                }
+            }
         } catch {
             print("効果音再生エラー: \(error)")
         }
+    }
+
+    /// 再生中の効果音をすべて止める（クリア SE が次ステージに残らないように）
+    func stopAllEffects() {
+        for player in effectPlayers {
+            player.stop()
+        }
+        effectPlayers.removeAll()
     }
 }

@@ -13,8 +13,18 @@ struct EndPopupView: View {
     var onClose: () -> Void          // Home
     let onClosePopup: () -> Void     // Close（×）
 
+    @Environment(\.colorScheme) private var colorScheme
+
     private let accent = Color(hex: "4a5fb8")
-    private let ink = Color(hex: "1d3a5c")
+    private var ink: Color {
+        colorScheme == .dark ? .white : Color(hex: "1d3a5c")
+    }
+    private var secondaryInk: Color {
+        ink.opacity(0.78)
+    }
+    private var primaryInk: Color {
+        ink.opacity(0.92)
+    }
 
     var body: some View {
         ZStack {
@@ -68,16 +78,16 @@ struct EndPopupView: View {
                         Button(action: onClose) {
                             Text("ホームへ")
                                 .font(.system(size: 16, weight: .bold))
-                                .foregroundStyle(ink.opacity(0.9))
+                                .foregroundStyle(primaryInk)
                                 .frame(width: 120)
                                 .padding(.vertical, 12)
                                 .background(
                                     RoundedRectangle(cornerRadius: 12, style: .continuous)
-                                        .fill(Color.white.opacity(0.55))
+                                        .fill(Color.white.opacity(colorScheme == .dark ? 0.18 : 0.55))
                                 )
                                 .overlay(
                                     RoundedRectangle(cornerRadius: 12, style: .continuous)
-                                        .stroke(Color.white.opacity(0.5), lineWidth: 1)
+                                        .stroke(Color.white.opacity(colorScheme == .dark ? 0.28 : 0.5), lineWidth: 1)
                                 )
                         }
                         .buttonStyle(.plain)
@@ -114,14 +124,14 @@ struct EndPopupView: View {
             HStack(spacing: 8) {
                 Image(systemName: icon)
                     .font(.system(size: 15, weight: .semibold))
-                    .foregroundStyle(accent)
+                    .foregroundStyle(colorScheme == .dark ? Color.white.opacity(0.85) : accent)
                     .frame(width: 22, alignment: .center)
                 Text(title)
-                    .foregroundStyle(ink.opacity(0.78))
+                    .foregroundStyle(secondaryInk)
             }
             Spacer()
             Text(value)
-                .foregroundStyle(ink.opacity(0.92))
+                .foregroundStyle(primaryInk)
         }
         .font(.system(size: 16, weight: .medium))
     }

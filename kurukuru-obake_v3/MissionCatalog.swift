@@ -198,7 +198,7 @@ enum MissionCatalog {
             kind: .normal,
             headline: "今夜の頼まれごと",
             shortTitle: "夏休みの虫かご",
-            body: "蓋を開けたら何もいなかった縁側に、夏の気配だけが残っている。草のくずのあいだの魂を、還してあげて。",
+            body: "縁側の虫かごは空のまま、夏の気配だけが残っている。草のくずのあいだの魂を、還してあげて。",
             ghostTarget: 20,
             moveLimit: 23,
             rewardFriend: nil,

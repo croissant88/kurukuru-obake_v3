@@ -77,11 +77,27 @@ struct SoulItemPlacement: Equatable {
         ghostShiftX: 0.10
     )
 
-    /// フェンスの欠片：右上（帽子系）
+    /// フェンス：右下（金魚系の右手もと寄り）
     static let rooftopFence = SoulItemPlacement(
-        sizeRatio: 0.36,
+        sizeRatio: 0.38,
+        offsetX: 0.40,
+        offsetY: 0.36,
+        ghostShiftX: 0
+    )
+
+    /// 空き缶：右手もと（金魚寄り）
+    static let rainyVending = SoulItemPlacement(
+        sizeRatio: 0.40,
         offsetX: 0.42,
-        offsetY: -0.40,
+        offsetY: 0.18,
+        ghostShiftX: 0
+    )
+
+    /// タオル：右手もと（金魚と同じ）
+    static let laundryRope = SoulItemPlacement(
+        sizeRatio: 0.42,
+        offsetX: 0.40,
+        offsetY: 0.12,
         ghostShiftX: 0
     )
 }
@@ -173,6 +189,22 @@ enum SoulItemCatalog {
             imageName: "item_rooftop_fence",
             placement: .rooftopFence,
             equippedMessage: "指先に、錆と風が残ってる"
+        ),
+        SoulItem(
+            id: "rainy_vending",
+            name: "ぬれた空き缶",
+            unlockFragmentID: "rainy_vending",
+            imageName: "item_rainy_vending",
+            placement: .rainyVending,
+            equippedMessage: "押したボタンは、光らないまま"
+        ),
+        SoulItem(
+            id: "laundry_rope",
+            name: "取りこみ忘れたタオル",
+            unlockFragmentID: "laundry_rope",
+            imageName: "item_laundry_rope",
+            placement: .laundryRope,
+            equippedMessage: "思い出せないのに、懐かしい匂いがする"
         )
     ]
 
